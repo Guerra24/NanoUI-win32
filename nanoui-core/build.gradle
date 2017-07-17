@@ -1,0 +1,30 @@
+plugins {
+	id 'net.nemerosa.versioning' version '2.0.0'
+}
+
+sourceSets {
+	main {
+		java.srcDir("${projectDir}/src/main/java/")
+		resources.srcDir("${projectDir}/src/main/resources")
+	}
+	
+	test {
+		java.srcDirs = ["${projectDir}/src/test/java/"]
+	}
+}
+
+jar {
+	version = "0.0.1-" + versioning.info.full
+	manifest {
+		attributes (
+				"Specification-Title": "NanoUI",
+				"Specification-Version": version,
+				"Specification-Vendor": "Lux Vacuos",
+				"Implementation-Title": "net.luxvacuos.nanoui",
+				"Implementation-Version": versioning.info.full,
+				"Implementation-Vendor": "Lux Vacuos"
+				)
+	}
+}
+
+

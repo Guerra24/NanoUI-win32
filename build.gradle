@@ -1,66 +1,45 @@
-plugins {
-	id 'eclipse'
-	id 'idea'
-	id 'java'
-	id 'application'
-	id 'net.nemerosa.versioning' version '2.0.0'
-}
+subprojects {
+	apply plugin: "eclipse"
+	apply plugin: "idea"
+	apply plugin: "java"
 
-mainClassName = 'net.luxvacuos.nanoui.core.states.TaskBar'
-sourceCompatibility = 1.8
-project.ext.lwjglVersion = "3.1.2"
-
-repositories {
-	mavenCentral()
-	maven { url "https://oss.sonatype.org/content/repositories/releases/" }
-	maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-}
-
-dependencies {
+	sourceCompatibility = 1.8
 	
-	// LWJGL dependencies
-	compile "org.lwjgl:lwjgl:${lwjglVersion}"
-	compile "org.lwjgl:lwjgl-glfw:${lwjglVersion}"
-	compile "org.lwjgl:lwjgl-nanovg:${lwjglVersion}"
-	compile "org.lwjgl:lwjgl-opengl:${lwjglVersion}"
-	compile "org.lwjgl:lwjgl-stb:${lwjglVersion}"
-	// LWJGL natives Windows
-	runtime "org.lwjgl:lwjgl:${lwjglVersion}:natives-windows"
-	runtime "org.lwjgl:lwjgl-opengl:${lwjglVersion}:natives-windows"
-	runtime "org.lwjgl:lwjgl-glfw:${lwjglVersion}:natives-windows"
-	runtime "org.lwjgl:lwjgl-nanovg:${lwjglVersion}:natives-windows"
-	runtime "org.lwjgl:lwjgl-stb:${lwjglVersion}:natives-windows"
-	// LWJGL Natives Linux
-	runtime "org.lwjgl:lwjgl:${lwjglVersion}:natives-linux"
-	runtime "org.lwjgl:lwjgl-opengl:${lwjglVersion}:natives-linux"
-	runtime "org.lwjgl:lwjgl-glfw:${lwjglVersion}:natives-linux"
-	runtime "org.lwjgl:lwjgl-nanovg:${lwjglVersion}:natives-linux"
-	runtime "org.lwjgl:lwjgl-stb:${lwjglVersion}:natives-linux"
-	// LWJGL Natives OSX
-	runtime "org.lwjgl:lwjgl:${lwjglVersion}:natives-macos"
-	runtime "org.lwjgl:lwjgl-opengl:${lwjglVersion}:natives-macos"
-	runtime "org.lwjgl:lwjgl-glfw:${lwjglVersion}:natives-macos"
-	runtime "org.lwjgl:lwjgl-nanovg:${lwjglVersion}:natives-macos"
-	runtime "org.lwjgl:lwjgl-stb:${lwjglVersion}:natives-macos"
-	
-	compile 'com.google.code.gson:gson:2.8.0'
-	
-	compile group: 'net.java.dev.jna', name: 'jna-platform', version: '4.4.0'
-	compile group: 'net.java.dev.jna', name: 'jna', version: '4.4.0'
-	
-	testCompile group: 'junit', name: 'junit', version: '4.12'
-}
-
-sourceSets {
-	main {
-		java.srcDir("${projectDir}/src/main/java/")
-		resources.srcDir("${projectDir}/src/main/resources")
-	}
-
-	test {
-		java.srcDirs = ["${projectDir}/src/test/java/"]
+	repositories {
+		mavenCentral()
+		maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+		maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 	}
 }
 
+
+project(":nanoui-core") {
+
+	project.ext.lwjglVersion = "3.1.2"
+
+	dependencies {
+		// LWJGL dependencies
+		compile "org.lwjgl:lwjgl:${lwjglVersion}"
+		compile "org.lwjgl:lwjgl-glfw:${lwjglVersion}"
+		compile "org.lwjgl:lwjgl-nanovg:${lwjglVersion}"
+		compile "org.lwjgl:lwjgl-opengl:${lwjglVersion}"
+		compile "org.lwjgl:lwjgl-stb:${lwjglVersion}"
+		// LWJGL natives Windows
+		runtime "org.lwjgl:lwjgl:${lwjglVersion}:natives-windows"
+		runtime "org.lwjgl:lwjgl-opengl:${lwjglVersion}:natives-windows"
+		runtime "org.lwjgl:lwjgl-glfw:${lwjglVersion}:natives-windows"
+		runtime "org.lwjgl:lwjgl-nanovg:${lwjglVersion}:natives-windows"
+		runtime "org.lwjgl:lwjgl-stb:${lwjglVersion}:natives-windows"
+		compile 'net.java.dev.jna:jna-platform:4.4.0'
+		compile 'net.java.dev.jna:jna:4.4.0'
+	}
+}
+
+project(":nanoui-taskbar") {
+
+	dependencies {
+		compile project(':nanoui-core')
+	}
+}
 
 task wrapper(type: Wrapper) { gradleVersion = '3.5' }
