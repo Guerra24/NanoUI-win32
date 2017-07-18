@@ -124,20 +124,20 @@ public class TaskBar extends AbstractState {
 					System.out.println(action + " - " + lParam + ": " + title);
 					switch ((int) wParam) {
 					case HSHELL.HSHELL_WINDOWCREATED:
-						if (User32.INSTANCE.IsWindowVisible(hwndD)) {
-							if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
-								WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
-								btn.setOnButtonPress(() -> {
-									WINDOWPLACEMENT winpl = new WINDOWPLACEMENT();
-									User32Ext.INSTANCE.GetWindowPlacement(hwndD, winpl);
-									if (winpl.showCmd != SW_MAXIMIZE)
-										User32.INSTANCE.ShowWindow(hwndD, SW_RESTORE);
-									User32.INSTANCE.SetForegroundWindow(hwndD);
-								});
-								tasks.addComponent(btn);
-								windows.put(hwndD, btn);
-							}
-						}
+						if (User32.INSTANCE.IsWindowVisible(hwndD))
+							if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
+								if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
+									WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
+									btn.setOnButtonPress(() -> {
+										WINDOWPLACEMENT winpl = new WINDOWPLACEMENT();
+										User32Ext.INSTANCE.GetWindowPlacement(hwndD, winpl);
+										if (winpl.showCmd != SW_MAXIMIZE)
+											User32.INSTANCE.ShowWindow(hwndD, SW_RESTORE);
+										User32.INSTANCE.SetForegroundWindow(hwndD);
+									});
+									tasks.addComponent(btn);
+									windows.put(hwndD, btn);
+								}
 						break;
 					case HSHELL.HSHELL_WINDOWDESTROYED:
 						WindowButton btnD = windows.get(hwndD);
@@ -245,18 +245,19 @@ public class TaskBar extends AbstractState {
 					byte[] buffer = new byte[1024];
 					User32Ext.INSTANCE.GetWindowTextA(hwndD, buffer, buffer.length);
 					String title = Native.toString(buffer);
-					if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
-						WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
-						btn.setOnButtonPress(() -> {
-							WINDOWPLACEMENT winpl = new WINDOWPLACEMENT();
-							User32Ext.INSTANCE.GetWindowPlacement(hwndD, winpl);
-							if (winpl.showCmd != SW_MAXIMIZE)
-								User32.INSTANCE.ShowWindow(hwndD, SW_RESTORE);
-							User32.INSTANCE.SetForegroundWindow(hwndD);
-						});
-						tasks.addComponent(btn);
-						windows.put(hwndD, btn);
-					}
+					if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
+						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
+							WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
+							btn.setOnButtonPress(() -> {
+								WINDOWPLACEMENT winpl = new WINDOWPLACEMENT();
+								User32Ext.INSTANCE.GetWindowPlacement(hwndD, winpl);
+								if (winpl.showCmd != SW_MAXIMIZE)
+									User32.INSTANCE.ShowWindow(hwndD, SW_RESTORE);
+								User32.INSTANCE.SetForegroundWindow(hwndD);
+							});
+							tasks.addComponent(btn);
+							windows.put(hwndD, btn);
+						}
 				}
 				return true;
 			}
@@ -264,8 +265,8 @@ public class TaskBar extends AbstractState {
 
 		Container rightBtns = new Container(0, 0, 200, Variables.HEIGHT);
 		rightBtns.setLayout(new FlowLayout(Direction.LEFT, 0, 0));
-		
-		Button minimizeAll = new Button(0,0,5,Variables.HEIGHT, "");
+
+		Button minimizeAll = new Button(0, 0, 5, Variables.HEIGHT, "");
 		minimizeAll.setWindowAlignment(Alignment.RIGHT_BOTTOM);
 		minimizeAll.setAlignment(Alignment.LEFT_TOP);
 		minimizeAll.setOnButtonPress(() -> {
@@ -303,6 +304,7 @@ public class TaskBar extends AbstractState {
 		window.addComponent(startBtns);
 		window.addComponent(tasks);
 		window.addComponent(rightBtns);
+		System.gc();
 	}
 
 	@Override

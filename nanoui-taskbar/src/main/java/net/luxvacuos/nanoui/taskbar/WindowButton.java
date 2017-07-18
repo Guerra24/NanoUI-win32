@@ -40,9 +40,8 @@ public class WindowButton extends Button {
 	public void render(Window window) {
 		if (!enabled)
 			return;
-		Theme.renderTaskbarWindowButton(window.getNVGID(), preicon, text, font, entypo,
-				rootComponent.rootX + alignedX, window.getHeight() - rootComponent.rootY - alignedY - h, w, h, inside,
-				active, fontSize);
+		Theme.renderTaskbarWindowButton(window.getNVGID(), preicon, text, font, entypo, rootComponent.rootX + alignedX,
+				window.getHeight() - rootComponent.rootY - alignedY - h, w, h, inside, active, fontSize);
 	}
 
 	public HWND getHwnd() {

@@ -76,6 +76,12 @@ public interface DWMapiExt extends Library {
 			return FIELDS;
 		}
 	}
+	
+	public interface DWM_TNP {
+		public static final int DWM_TNP_VISIBLE = 0x8;
+		public static final int DWM_TNP_OPACITY = 0x4;
+		public static final int DWM_TNP_RECTDESTINATION = 0x1;
+	}
 
 	public HRESULT DwmExtendFrameIntoClientArea(HWND window, MARGINS margins);
 

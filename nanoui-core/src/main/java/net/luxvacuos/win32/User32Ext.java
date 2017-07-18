@@ -132,4 +132,6 @@ public interface User32Ext extends Library {
 
 	public long SetWindowLongPtr(HWND hWnd, int nIndex, long dwNewLong);
 
+	public long GetClassLongPtr(HWND hwnd, int nIndex);
+
 }

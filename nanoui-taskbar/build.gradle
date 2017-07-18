@@ -3,7 +3,7 @@ plugins {
 	id 'net.nemerosa.versioning' version '2.0.0'
 }
 
-mainClassName = 'net.luxvacuos.nanoui.taskbar.Taskbar'
+mainClassName = 'net.luxvacuos.nanoui.taskbar.TaskBar'
 
 sourceSets {
 	main {

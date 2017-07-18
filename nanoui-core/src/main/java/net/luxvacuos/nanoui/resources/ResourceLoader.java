@@ -66,18 +66,23 @@ public class ResourceLoader {
 			e.printStackTrace();
 		}
 		return new Font(name, buffer, font);
-}
+	}
 
 	public int loadNVGTexture(String file) {
-		ByteBuffer buffer = null;
 		int tex = 0;
 		try {
-			buffer = ioResourceToByteBuffer("assets/textures/menu/" + file + ".png", 8 * 1024);
-			tex = nvgCreateImageMem(nvgID, 0, buffer);
+			tex = loadNVGTexture(ioResourceToByteBuffer("assets/" + file + ".png", 8 * 1024));
 		} catch (Exception e) {
 			throw new LoadTextureException(file, e);
 		}
 		return tex;
+	}
+
+	public int loadNVGTexture(ByteBuffer buffer) {
+		if (buffer != null)
+			return nvgCreateImageMem(nvgID, 0, buffer);
+		else
+			return -1;
 	}
 
 	/**
