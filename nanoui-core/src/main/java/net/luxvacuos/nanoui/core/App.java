@@ -62,8 +62,8 @@ public class App {
 			delta = window.getDelta();
 			accumulator += delta;
 			while (accumulator >= interval) {
-				StateMachine.update(interval);
 				appUI.update(interval);
+				StateMachine.update(interval);
 				accumulator -= interval;
 			}
 			alpha = accumulator / interval;

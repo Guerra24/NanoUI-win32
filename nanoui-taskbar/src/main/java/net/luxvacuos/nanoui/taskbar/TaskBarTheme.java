@@ -52,7 +52,7 @@ public class TaskBarTheme extends NanoTheme {
 
 	@Override
 	public void renderButton(long vg, String preicon, String text, String font, String entypo, float x, float y,
-			float w, float h, boolean highlight, float fontSize) {
+			float w, float h, boolean highlight, float fontSize, float preiconSize) {
 		float tw, iw = 0;
 		nvgSave(vg);
 
@@ -68,14 +68,14 @@ public class TaskBarTheme extends NanoTheme {
 		nvgFontFace(vg, font);
 		tw = nvgTextBounds(vg, 0, 0, text, (FloatBuffer) null);
 		if (preicon != null) {
-			nvgFontSize(vg, h * 0.5f);
+			nvgFontSize(vg, preiconSize);
 			nvgFontFace(vg, entypo);
 			iw = nvgTextBounds(vg, 0, 0, preicon, (FloatBuffer) null);
 			iw += h * 0.15f;
 		}
 
 		if (preicon != null) {
-			nvgFontSize(vg, h * 0.5f);
+			nvgFontSize(vg, preiconSize);
 			nvgFontFace(vg, entypo);
 			nvgFillColor(vg, buttonTextColor);
 			if (text.isEmpty()) {

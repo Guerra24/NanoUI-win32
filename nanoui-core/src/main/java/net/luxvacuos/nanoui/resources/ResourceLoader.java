@@ -53,14 +53,21 @@ public class ResourceLoader {
 	}
 
 	public Font loadNVGFont(String filename, String name) {
-		return loadNVGFont(filename, name, 150);
+		return loadNVGFont(filename, name, 150, false);
 	}
 
-	public Font loadNVGFont(String filename, String name, int size) {
+	public Font loadNVGFont(String filename, String name, boolean file) {
+		return loadNVGFont(filename, name, 150, file);
+	}
+
+	public Font loadNVGFont(String filename, String name, int size, boolean file) {
 		int font = 0;
 		ByteBuffer buffer = null;
 		try {
-			buffer = ioResourceToByteBuffer("assets/fonts/" + filename + ".ttf", size * 1024);
+			if (!file)
+				buffer = ioResourceToByteBuffer("assets/fonts/" + filename + ".ttf", size * 1024);
+			else
+				buffer = ioResourceToByteBuffer(filename + ".ttf", size * 1024);
 			font = nvgCreateFontMem(nvgID, name, buffer, 0);
 		} catch (IOException e) {
 			e.printStackTrace();

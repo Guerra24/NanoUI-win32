@@ -41,6 +41,20 @@ import org.lwjgl.glfw.GLFW;
  * @author kappaOne
  */
 public class Sync {
+	
+	static {
+		if (System.getProperty("os.name").startsWith("Win")) {
+			Thread timerAccuracyThread = new Thread(() -> {
+				try {
+					Thread.sleep(Long.MAX_VALUE);
+				} catch (Exception e) {
+				}
+			});
+			timerAccuracyThread.setName("LWJGL Timer");
+			timerAccuracyThread.setDaemon(true);
+			timerAccuracyThread.start();
+		}
+	}
 
 	private static final long NANOS_IN_SECOND = 1000L * 1000L * 1000L;
 	private long nextFrame = 0;

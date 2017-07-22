@@ -24,7 +24,6 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 import net.luxvacuos.nanoui.input.Mouse;
-import net.luxvacuos.nanoui.rendering.api.glfw.Icon;
 import net.luxvacuos.nanoui.rendering.api.glfw.PixelBufferHandle;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.glfw.WindowHandle;
@@ -38,16 +37,17 @@ public class AppUI {
 
 	private static Window window;
 
-	private Font poppinsRegular, poppinsLight, poppinsMedium, poppinsBold, poppinsSemiBold, entypo;
+	private Font poppinsRegular, poppinsLight, poppinsMedium, poppinsBold, poppinsSemiBold, entypo, segoeui, segoemdl2;
 
 	public void init() {
 
-		Icon[] icons = new Icon[] { new Icon("icon32"), new Icon("icon64") };
 		WindowHandle handle = WindowManager.generateHandle(Variables.WIDTH, Variables.HEIGHT, Variables.TITLE);
 		handle.isDecorated(Variables.DECORATED);
+		handle.isVisible(false);
 		handle.alwaysOnTop(Variables.ALWAYS_ON_TOP);
 		PixelBufferHandle pb = new PixelBufferHandle();
 		pb.setSrgbCapable(1);
+		pb.setSamples(4);
 		handle.setPixelBuffer(pb);
 		long gameWindowID = WindowManager.createWindow(handle, true);
 		window = WindowManager.getWindow(gameWindowID);
@@ -60,7 +60,9 @@ public class AppUI {
 		poppinsMedium = loader.loadNVGFont("Poppins-Medium", "Poppins-Medium");
 		poppinsBold = loader.loadNVGFont("Poppins-Bold", "Poppins-Bold");
 		poppinsSemiBold = loader.loadNVGFont("Poppins-SemiBold", "Poppins-SemiBold");
-		entypo = loader.loadNVGFont("fontawesome-webfont", "Entypo", 40);
+		entypo = loader.loadNVGFont("fontawesome-webfont", "Entypo", 40, false);
+		segoeui = loader.loadNVGFont("C:\\Windows\\Fonts\\segoeui", "Segoe UI", true);
+		segoemdl2 = loader.loadNVGFont("C:\\Windows\\Fonts\\segmdl2", "Segoe MDL2", true);
 	}
 
 	public void update(float delta) {
@@ -74,6 +76,8 @@ public class AppUI {
 		poppinsBold.dispose();
 		poppinsSemiBold.dispose();
 		entypo.dispose();
+		segoeui.dispose();
+		segoemdl2.dispose();
 		WindowManager.closeAllDisplays();
 		GLFW.glfwTerminate();
 	}

@@ -30,9 +30,9 @@ import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 
 public class TextArea extends Component {
 
-	private String text, font = "Poppins-Regular";
+	private String text, font = "Segoe UI";
 	private int align = NVG_ALIGN_LEFT | NVG_ALIGN_TOP;
-	private float fontSize = 25;
+	private float fontSize = 20;
 	private NVGColor color = Theme.rgba(255, 255, 255, 255, NVGColor.create());
 
 	public TextArea(String text, float x, float y, float w) {

@@ -42,4 +42,11 @@ project(":nanoui-taskbar") {
 	}
 }
 
+project(":nanoui-test") {
+
+	dependencies {
+		compile project(':nanoui-core')
+	}
+}
+
 task wrapper(type: Wrapper) { gradleVersion = '3.5' }

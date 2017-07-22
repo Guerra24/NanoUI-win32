@@ -22,7 +22,15 @@ package net.luxvacuos.nanoui.rendering.api.nanovg.themes;
 
 import org.lwjgl.nanovg.NVGColor;
 
+import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme.ButtonStyle;
+
 public interface ITheme {
+	
+	public void renderTitlebar(long vg, float w, NVGColor color);
+
+	public float renderTitleBarText(long vg, String text, String font, int align, float x, float y, float fontSize);
+
+	public void renderTitleBarButton(long vg, float x, float y, float w, float h, ButtonStyle style, boolean highlight);
 
 	public float renderText(long vg, String text, String font, int align, float x, float y, float fontSize,
 			NVGColor color);
@@ -37,7 +45,7 @@ public interface ITheme {
 			boolean selected);
 
 	public void renderButton(long vg, String preicon, String text, String font, String entypo, float x, float y,
-			float w, float h, boolean highlight, float fontSize);
+			float w, float h, boolean highlight, float fontSize, float preiconSize);
 
 	public void renderContexMenuButton(long vg, String text, String font, float x, float y, float w, float h,
 			float fontSize, boolean highlight);

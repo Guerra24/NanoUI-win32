@@ -21,15 +21,16 @@ package net.luxvacuos.win32;
 
 import java.util.List;
 
-import com.sun.jna.Library;
 import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.RECT;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
+import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 
-public interface DWMapiExt extends Library {
+public interface DWMapiExt extends StdCallLibrary {
 
 	public static final DWMapiExt INSTANCE = Native.loadLibrary("dwmapi", DWMapiExt.class,
 			W32APIOptions.DEFAULT_OPTIONS);
@@ -42,6 +43,43 @@ public interface DWMapiExt extends Library {
 		public int cxRightWidth;
 		public int cyTopHeight;
 		public int cyBottomHeight;
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return FIELDS;
+		}
+
+	}
+
+	public class PWINDOWPOS extends Structure implements Structure.ByReference {
+		public static final List<String> FIELDS = createFieldsOrder("hwnd", "hwndInsertAfter", "x", "y", "cx", "cy",
+				"flags");
+
+		public HWND hwnd;
+		public HWND hwndInsertAfter;
+		public int x;
+		public int y;
+		public int cx;
+		public int cy;
+		public int flags;
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return FIELDS;
+		}
+
+	}
+	
+	public class NCCALCSIZE_PARAMS extends Structure implements Structure.ByReference {
+		public static final List<String> FIELDS = createFieldsOrder("rgrc", "lppos");
+
+		public RECT[] rgrc = new RECT[3];
+		public PWINDOWPOS lppos;
+
+		public NCCALCSIZE_PARAMS(Pointer pointer) {
+			super(pointer);
+			read();
+		}
 
 		@Override
 		protected List<String> getFieldOrder() {
@@ -76,7 +114,7 @@ public interface DWMapiExt extends Library {
 			return FIELDS;
 		}
 	}
-	
+
 	public interface DWM_TNP {
 		public static final int DWM_TNP_VISIBLE = 0x8;
 		public static final int DWM_TNP_OPACITY = 0x4;

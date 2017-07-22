@@ -18,18 +18,22 @@
  * 
  */
 
-package net.luxvacuos.nanoui.core;
+package net.luxvacuos.nanoui.ui;
 
-public class Variables {
-	public static int WIDTH = 1280;
-	public static int HEIGHT = 720;
-	public static int X = 0;
-	public static int Y = 0;
-	public static String TITLE = "";
-	public static boolean DEBUG = false;
-	public static boolean DECORATED = true;
-	public static boolean ALWAYS_ON_TOP = false;
-	public static float SCROLLBAR_SIZE = 16;
-	public static float TITLEBAR_HEIGHT = 32;
+import net.luxvacuos.nanoui.rendering.api.glfw.Window;
+import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
+
+public class TitleBarText extends Text {
+
+	public TitleBarText(String text, float x, float y) {
+		super(text, x, y);
+	}
+	
+	@Override
+	public void render(Window window) {
+		w = Theme.renderTitleBarText(window.getNVGID(), text, font, align, rootComponent.rootX + alignedX + 10,
+				window.getHeight() - rootComponent.rootY - alignedY, fontSize) - rootComponent.rootX + alignedX;
+		w /= 2f;
+	}
 
 }

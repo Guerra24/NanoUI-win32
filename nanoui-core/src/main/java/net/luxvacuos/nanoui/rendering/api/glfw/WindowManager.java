@@ -21,7 +21,6 @@
 package net.luxvacuos.nanoui.rendering.api.glfw;
 
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
-import static org.lwjgl.glfw.GLFWVulkan.glfwVulkanSupported;
 import static org.lwjgl.stb.STBImage.stbi_failure_reason;
 import static org.lwjgl.stb.STBImage.stbi_image_free;
 import static org.lwjgl.stb.STBImage.stbi_info_from_memory;
@@ -41,6 +40,7 @@ import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
 import org.lwjgl.glfw.GLFWWindowFocusCallback;
+import org.lwjgl.glfw.GLFWWindowMaximizeCallback;
 import org.lwjgl.glfw.GLFWWindowPosCallback;
 import org.lwjgl.glfw.GLFWWindowRefreshCallback;
 import org.lwjgl.glfw.GLFWWindowSizeCallback;
@@ -215,12 +215,13 @@ public final class WindowManager {
 	protected static GLFWCursorEnterCallback cursorEnterCallback;
 	protected static GLFWCursorPosCallback cursorPosCallback;
 	protected static GLFWMouseButtonCallback mouseButtonCallback;
-	protected static GLFWWindowFocusCallback windowFocusCallback;
 	protected static GLFWWindowSizeCallback windowSizeCallback;
 	protected static GLFWWindowPosCallback windowPosCallback;
 	protected static GLFWWindowRefreshCallback windowRefreshCallback;
 	protected static GLFWFramebufferSizeCallback framebufferSizeCallback;
 	protected static GLFWScrollCallback scrollCallback;
+	protected static GLFWWindowFocusCallback focusCallback;
+	protected static GLFWWindowMaximizeCallback maximizeCallback;
 
 	static {
 		cursorEnterCallback = new GLFWCursorEnterCallback() {
@@ -251,14 +252,6 @@ public final class WindowManager {
 			}
 		};
 
-		windowFocusCallback = new GLFWWindowFocusCallback() {
-			@Override
-			public void invoke(long windowID, boolean focused) {
-				if (focused && getWindow(windowID) != null && !getWindow(windowID).isWindowFocused())
-					GLFW.glfwFocusWindow(windowID);
-			}
-		};
-
 		windowSizeCallback = new GLFWWindowSizeCallback() {
 			@Override
 			public void invoke(long windowID, int width, int height) {
@@ -266,15 +259,14 @@ public final class WindowManager {
 				if (window == null)
 					return;
 
-				IntBuffer w = BufferUtils.createIntBuffer(1);
-				IntBuffer h = BufferUtils.createIntBuffer(1);
+				int[] w = new int[1];
+				int[] h = new int[1];
 				GLFW.glfwGetFramebufferSize(windowID, w, h);
-				window.framebufferWidth = w.get(0);
-				window.framebufferHeight = h.get(0);
+				window.framebufferWidth = w[0];
+				window.framebufferHeight = h[0];
 
-				GLFW.glfwGetWindowSize(windowID, w, h);
-				window.width = w.get(0);
-				window.height = h.get(0);
+				window.width = width;
+				window.height = height;
 				window.pixelRatio = (float) window.framebufferWidth / (float) window.width;
 				window.resetViewport();
 			}
@@ -312,6 +304,28 @@ public final class WindowManager {
 					return;
 				window.framebufferWidth = width;
 				window.framebufferHeight = height;
+			}
+		};
+		
+		focusCallback = new GLFWWindowFocusCallback() {
+			
+			@Override
+			public void invoke(long windowID, boolean focused) {
+				Window window = getWindow(windowID);
+				if (window == null)
+					return;
+				window.active = focused;
+			}
+		};
+		
+		maximizeCallback = new GLFWWindowMaximizeCallback() {
+			
+			@Override
+			public void invoke(long windowID, boolean maximized) {
+				Window window = getWindow(windowID);
+				if (window == null)
+					return;
+				window.maximized = maximized;
 			}
 		};
 

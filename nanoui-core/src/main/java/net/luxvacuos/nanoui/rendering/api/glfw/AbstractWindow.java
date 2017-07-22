@@ -20,7 +20,7 @@
 
 package net.luxvacuos.nanoui.rendering.api.glfw;
 
-import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
+import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.glfwHideWindow;
 import static org.lwjgl.glfw.GLFW.glfwSetCursorEnterCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
@@ -43,7 +43,6 @@ import org.lwjgl.opengl.GLCapabilities;
 
 import net.luxvacuos.nanoui.input.KeyboardHandler;
 import net.luxvacuos.nanoui.resources.ResourceLoader;
-
 
 public abstract class AbstractWindow implements IWindow {
 
@@ -70,6 +69,8 @@ public abstract class AbstractWindow implements IWindow {
 
 	protected boolean latestResized = false;
 	protected float pixelRatio;
+	protected boolean active = true;
+	protected boolean maximized = false;
 
 	protected long nvgID;
 	protected ResourceLoader resourceLoader;
@@ -96,6 +97,8 @@ public abstract class AbstractWindow implements IWindow {
 		glfwSetWindowRefreshCallback(windowID, WindowManager.windowRefreshCallback);
 		glfwSetFramebufferSizeCallback(windowID, WindowManager.framebufferSizeCallback);
 		glfwSetScrollCallback(windowID, WindowManager.scrollCallback);
+		glfwSetWindowMaximizeCallback(windowID, WindowManager.maximizeCallback);
+		glfwSetWindowFocusCallback(windowID, WindowManager.focusCallback);
 	}
 
 	@Override
@@ -109,7 +112,7 @@ public abstract class AbstractWindow implements IWindow {
 	public void resetViewport() {
 		glViewport(0, 0, (int) (width * pixelRatio), (int) (height * pixelRatio));
 	}
-	
+
 	public void setViewport(int x, int y, int width, int height) {
 		glViewport(0, 0, width, height);
 	}
@@ -197,13 +200,20 @@ public abstract class AbstractWindow implements IWindow {
 		return this.resourceLoader;
 	}
 
-
 	public KeyboardHandler getKeyboardHandler() {
 		return this.kbHandle;
 	}
 
 	public boolean isCloseRequested() {
 		return glfwWindowShouldClose(this.windowID);
+	}
+	
+	public boolean isActive() {
+		return active;
+	}
+	
+	public boolean isMaximized() {
+		return maximized;
 	}
 
 	private boolean getWindowAttribute(int attribute) {
@@ -235,8 +245,8 @@ public abstract class AbstractWindow implements IWindow {
 	@Override
 	public void dispose() {
 	}
-	
-	public void setWindowTitle(String text){
+
+	public void setWindowTitle(String text) {
 		GLFW.glfwSetWindowTitle(this.windowID, text);
 	}
 

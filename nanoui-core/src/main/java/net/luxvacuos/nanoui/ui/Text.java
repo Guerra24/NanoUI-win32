@@ -29,9 +29,9 @@ import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 
 public class Text extends Component {
-	protected String text, font = "Poppins-Medium";
+	protected String text, font = "Segoe UI";
 	protected int align = NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE;
-	protected float fontSize = 25;
+	protected float fontSize = 17;
 	protected NVGColor color = Theme.rgba(255, 255, 255, 255, NVGColor.create());
 
 	public Text(String text, float x, float y) {
@@ -42,7 +42,7 @@ public class Text extends Component {
 
 	@Override
 	public void render(Window window) {
-		w = Theme.renderText(window.getNVGID(), text, font, align, rootComponent.rootX + alignedX,
+		w = Theme.renderText(window.getNVGID(), text, font, align, rootComponent.rootX + alignedX + 10,
 				window.getHeight() - rootComponent.rootY - alignedY, fontSize, color) - rootComponent.rootX + alignedX;
 		w /= 2f;
 	}

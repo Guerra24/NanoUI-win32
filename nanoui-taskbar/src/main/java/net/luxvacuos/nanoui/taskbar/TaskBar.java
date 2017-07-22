@@ -101,6 +101,8 @@ public class TaskBar extends AbstractState {
 		IGNORE_WINDOWS.add("Date and Time Information");
 
 		window = new ComponentWindow(AppUI.getMainWindow());
+		window.getTitlebar().setEnabled(false);
+		window.init(AppUI.getMainWindow());
 		window.setBackgroundColor(0, 0, 0, 0);
 		window.setLayout(new FlowLayout(Direction.RIGHT, 0, 0));
 
@@ -209,6 +211,7 @@ public class TaskBar extends AbstractState {
 
 		Button start = new Button(0, 0, Variables.HEIGHT, Variables.HEIGHT, "");
 		start.setPreicon(Theme.uniToString(0xF17a));
+		start.setEntypo("Entypo");
 		start.setOnButtonPress(() -> {
 			User32Ext.INSTANCE.keybd_event(User32Ext.VK_LWIN, 0, User32Ext.KEYEVENTF_KEYDOWN, 0);
 			User32Ext.INSTANCE.keybd_event(User32Ext.VK_LWIN, 0, User32Ext.KEYEVENTF_KEYUP, 0);
@@ -224,7 +227,8 @@ public class TaskBar extends AbstractState {
 		});
 
 		Button taskview = new Button(0, 0, Variables.HEIGHT, Variables.HEIGHT, "");
-		taskview.setPreicon(Theme.ICON_SQUARE);
+		taskview.setPreicon(Theme.ICON_MULTITASK);
+		taskview.setPreiconSize(24);
 		taskview.setOnButtonPress(() -> {
 			User32Ext.INSTANCE.keybd_event(User32Ext.VK_LWIN, 0, User32Ext.KEYEVENTF_KEYDOWN, 0);
 			User32Ext.INSTANCE.keybd_event(User32Ext.VK_TAB, 0, User32Ext.KEYEVENTF_KEYDOWN, 0);
@@ -279,7 +283,7 @@ public class TaskBar extends AbstractState {
 		Button actionCenter = new Button(0, 0, Variables.HEIGHT, Variables.HEIGHT, "");
 		actionCenter.setWindowAlignment(Alignment.RIGHT_BOTTOM);
 		actionCenter.setAlignment(Alignment.LEFT_TOP);
-		actionCenter.setPreicon(Theme.ICON_BARS);
+		actionCenter.setPreicon(Theme.ICON_ACTION_CENTER);
 		actionCenter.setOnButtonPress(() -> {
 			User32Ext.INSTANCE.keybd_event(User32Ext.VK_LWIN, 0, User32Ext.KEYEVENTF_KEYDOWN, 0);
 			User32Ext.INSTANCE.keybd_event(User32Ext.VK_A, 0, User32Ext.KEYEVENTF_KEYDOWN, 0);
@@ -304,6 +308,7 @@ public class TaskBar extends AbstractState {
 		window.addComponent(startBtns);
 		window.addComponent(tasks);
 		window.addComponent(rightBtns);
+		AppUI.getMainWindow().setVisible(true);
 		System.gc();
 	}
 

@@ -33,17 +33,23 @@ public class Theme {
 		Theme.theme = theme;
 	}
 
-	public static final String ICON_SEARCH = uniToString(0xF002);
+	public static final String ICON_SEARCH = uniToString(0xE721);
 	public static final String ICON_CIRCLED_CROSS = uniToString(0x2716);
-	public static final String ICON_CHEVRON_RIGHT = uniToString(0xF054);
+	public static final String ICON_CHEVRON_RIGHT = uniToString(0xE974);
 	public static final String ICON_CHECK = uniToString(0x2713);
 	public static final String ICON_LOGIN = uniToString(0xE740);
 	public static final String ICON_TRASH = uniToString(0xE729);
 	public static final String ICON_INFORMATION_SOURCE = uniToString(0x2139);
 	public static final String ICON_GEAR = uniToString(0xF013);
 	public static final String ICON_BLACK_RIGHT_POINTING_TRIANGLE = uniToString(0x25B6);
-	public static final String ICON_BARS = uniToString(0xF0C9);
-	public static final String ICON_SQUARE = uniToString(0xF096);
+	public static final String ICON_ACTION_CENTER = uniToString(0xE91C);
+	public static final String ICON_MULTITASK = uniToString(0xE7C4);
+	public static final String ICON_CHROME_CLOSE = uniToString(0xE8BB);
+	public static final String ICON_CHROME_MINIMIZE = uniToString(0xE921);
+	public static final String ICON_CHROME_MAXIMIZE = uniToString(0xE922);
+	public static final String ICON_CHROME_RESTORE = uniToString(0xE923);
+	public static final String ICON_CHROME_BACK = uniToString(0xE830);
+	public static final String ICON_CHROME_BACK_MIRRORED = uniToString(0xEA47);
 
 	public static final NVGPaint paintA = NVGPaint.create();
 	public static final NVGPaint paintB = NVGPaint.create();
@@ -53,7 +59,7 @@ public class Theme {
 	public static final NVGColor colorC = NVGColor.create();
 
 	public enum ButtonStyle {
-		CLOSE, MAXIMIZE, MINIMIZE, NONE, LEFT_ARROW, RIGHT_ARROW
+		CLOSE, MAXIMIZE, MINIMIZE, RESTORE, NONE, LEFT_ARROW, RIGHT_ARROW
 	};
 
 	public enum BackgroundStyle {
@@ -100,6 +106,20 @@ public class Theme {
 		return setColor(hex, NVGColor.create());
 	}
 
+	public static void renderTitlebar(long vg, float w, NVGColor color) {
+		theme.renderTitlebar(vg, w, color);
+	}
+
+	public static float renderTitleBarText(long vg, String text, String font, int align, float x, float y,
+			float fontSize) {
+		return theme.renderTitleBarText(vg, text, font, align, x, y, fontSize);
+	}
+
+	public static void renderTitleBarButton(long vg, float x, float y, float w, float h, ButtonStyle style,
+			boolean highlight) {
+		theme.renderTitleBarButton(vg, x, y, w, h, style, highlight);
+	}
+
 	public static float renderText(long vg, String text, String font, int align, float x, float y, float fontSize,
 			NVGColor color) {
 		return theme.renderText(vg, text, font, align, x, y, fontSize, color);
@@ -124,8 +144,8 @@ public class Theme {
 	}
 
 	public static void renderButton(long vg, String preicon, String text, String font, String entypo, float x, float y,
-			float w, float h, boolean highlight, float fontSize) {
-		theme.renderButton(vg, preicon, text, font, entypo, x, y, w, h, highlight, fontSize);
+			float w, float h, boolean highlight, float fontSize, float preiconSize) {
+		theme.renderButton(vg, preicon, text, font, entypo, x, y, w, h, highlight, fontSize, preiconSize);
 	}
 
 	public static void renderContexMenuButton(long vg, String text, String font, float x, float y, float w, float h,

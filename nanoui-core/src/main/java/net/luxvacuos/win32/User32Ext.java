@@ -21,7 +21,6 @@ package net.luxvacuos.win32;
 
 import java.util.List;
 
-import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
@@ -34,9 +33,10 @@ import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.platform.win32.WinUser.WINDOWPLACEMENT;
+import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 
-public interface User32Ext extends Library {
+public interface User32Ext extends StdCallLibrary {
 
 	public static final User32Ext INSTANCE = Native.loadLibrary("user32", User32Ext.class,
 			W32APIOptions.DEFAULT_OPTIONS);
@@ -133,5 +133,7 @@ public interface User32Ext extends Library {
 	public long SetWindowLongPtr(HWND hWnd, int nIndex, long dwNewLong);
 
 	public long GetClassLongPtr(HWND hwnd, int nIndex);
+	
+	public boolean ReleaseCapture();
 
 }

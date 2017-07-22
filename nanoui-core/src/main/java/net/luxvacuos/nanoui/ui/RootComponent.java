@@ -103,6 +103,13 @@ public class RootComponent {
 		return layout.getFinalH();
 	}
 	
+	public float getWidth() {
+		return root.rootW;
+	}
+	public float getHeight() {
+		return root.rootH;
+	}
+	
 	public List<Component> getComponents() {
 		return components;
 	}

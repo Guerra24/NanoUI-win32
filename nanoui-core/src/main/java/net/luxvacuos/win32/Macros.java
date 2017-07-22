@@ -1,7 +1,6 @@
 /*
- * This file is part of NanoUI
  * 
- * Copyright (C) 2016-2017 Lux Vacuos
+ * Copyright (C) 2017 Lux Vacuos
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,18 +17,16 @@
  * 
  */
 
-package net.luxvacuos.nanoui.core;
+package net.luxvacuos.win32;
 
-public class Variables {
-	public static int WIDTH = 1280;
-	public static int HEIGHT = 720;
-	public static int X = 0;
-	public static int Y = 0;
-	public static String TITLE = "";
-	public static boolean DEBUG = false;
-	public static boolean DECORATED = true;
-	public static boolean ALWAYS_ON_TOP = false;
-	public static float SCROLLBAR_SIZE = 16;
-	public static float TITLEBAR_HEIGHT = 32;
+import com.sun.jna.platform.win32.WinDef.LPARAM;
 
+public class Macros {
+	public static int GET_X_LPARAM(LPARAM lParam) {
+		return (int) lParam.longValue() & 0xFFFF;
+	}
+
+	public static int GET_Y_LPARAM(LPARAM lParam) {
+		return (int) (lParam.longValue() >> 16);
+	}
 }

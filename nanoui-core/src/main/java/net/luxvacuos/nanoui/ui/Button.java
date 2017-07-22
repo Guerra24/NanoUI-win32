@@ -26,10 +26,10 @@ import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 
 public class Button extends Component {
 
-	protected String text = "missigno", font = "Poppins-Medium", entypo = "Entypo";
+	protected String text = "missigno", font = "Segoe UI", entypo = "Segoe MDL2";
 	protected String preicon;
 	protected OnAction onPress;
-	protected float fontSize = 21;
+	protected float fontSize = 18, preiconSize = 16;
 	protected boolean pressed = false, enabled = true, inside;
 
 	public Button(float x, float y, float w, float h, String text) {
@@ -45,18 +45,20 @@ public class Button extends Component {
 		if (!enabled)
 			return;
 		Theme.renderButton(window.getNVGID(), preicon, text, font, entypo, rootComponent.rootX + alignedX,
-				window.getHeight() - rootComponent.rootY - alignedY - h, w, h, inside, fontSize);
+				window.getHeight() - rootComponent.rootY - alignedY - h, w, h, inside, fontSize, preiconSize);
 	}
 
 	@Override
 	public void update(float delta, Window window) {
 		if (!enabled)
 			return;
-		if (onPress != null)
-			if (pressed() && !pressed)
-				onPress.onAction();
-		pressed = pressed();
 		inside = insideButton();
+		if (onPress != null)
+			if (pressed() || pressed) {
+				if (!pressed() && pressed)
+					onPress.onAction();
+				pressed = pressed();
+			}
 		super.update(delta, window);
 	}
 
@@ -96,6 +98,10 @@ public class Button extends Component {
 
 	public void setFontSize(float fontSize) {
 		this.fontSize = fontSize;
+	}
+	
+	public void setPreiconSize(float preiconSize) {
+		this.preiconSize = preiconSize;
 	}
 
 	public void setEnabled(boolean enabled) {

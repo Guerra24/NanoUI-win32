@@ -39,6 +39,7 @@ import static org.lwjgl.nanovg.NanoVG.nvgClosePath;
 import static org.lwjgl.nanovg.NanoVG.nvgFill;
 import static org.lwjgl.nanovg.NanoVG.nvgFillColor;
 import static org.lwjgl.nanovg.NanoVG.nvgFillPaint;
+import static org.lwjgl.nanovg.NanoVG.nvgFontBlur;
 import static org.lwjgl.nanovg.NanoVG.nvgFontFace;
 import static org.lwjgl.nanovg.NanoVG.nvgFontSize;
 import static org.lwjgl.nanovg.NanoVG.nvgImagePattern;
@@ -73,7 +74,9 @@ import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.nanovg.NVGTextRow;
 
+import net.luxvacuos.nanoui.core.AppUI;
 import net.luxvacuos.nanoui.core.Variables;
+import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme.ButtonStyle;
 
 public class NanoTheme implements ITheme {
 
@@ -86,10 +89,132 @@ public class NanoTheme implements ITheme {
 			toggleButtonHighlight = Theme.setColor(0.5f, 1f, 0.5f, 1f);
 	protected NVGColor contextButtonColor = Theme.setColor("#646464C8"),
 			contextButtonHighlight = Theme.setColor("#FFFFFFC8");
+	protected NVGColor titleBarButtonColor = Theme.setColor("#00000000"),
+			titleBarButtonHighlight = Theme.setColor("#788A89FF"),
+			titleBarButtonCloseHighlight = Theme.setColor("#E81123FF");
+
+	public NanoTheme() {
+		buttonColor = Theme.rgba(255, 255, 255, 0);
+		buttonHighlight = Theme.rgba(255, 255, 255, 40);
+		buttonTextColor = Theme.rgba(255, 255, 255, 255);
+	}
+
+	@Override
+	public void renderTitlebar(long vg, float w, NVGColor color) {
+		nvgSave(vg);
+		nvgBeginPath(vg);
+		nvgRect(vg, 0, 1, w, Variables.TITLEBAR_HEIGHT);
+		nvgFillColor(vg, color);
+		nvgFill(vg);
+		nvgRestore(vg);
+	}
+
+	@Override
+	public float renderTitleBarText(long vg, String text, String font, int align, float x, float y, float fontSize) {
+		nvgSave(vg);
+		nvgFontSize(vg, fontSize);
+		nvgFontFace(vg, font);
+		nvgTextAlign(vg, align);
+
+		nvgFontBlur(vg, 0);
+		if (AppUI.getMainWindow().isActive())
+			nvgFillColor(vg, Theme.rgba(255, 255, 255, 255, colorA));
+		else
+			nvgFillColor(vg, Theme.rgba(102, 102, 102, 255, colorA));
+		nvgText(vg, x, y, text);
+		float[] bounds = new float[4];
+		nvgTextBounds(vg, x, y, text, bounds);
+		nvgRestore(vg);
+		return bounds[2];
+	}
+
+	@Override
+	public void renderTitleBarButton(long vg, float x, float y, float w, float h, ButtonStyle style,
+			boolean highlight) {
+		nvgSave(vg);
+		nvgBeginPath(vg);
+		nvgRect(vg, x, y, w, h);
+		if (highlight)
+			if (style.equals(ButtonStyle.CLOSE))
+				nvgFillColor(vg, titleBarButtonCloseHighlight);
+			else
+				nvgFillColor(vg, titleBarButtonHighlight);
+		else
+			nvgFillColor(vg, titleBarButtonColor);
+		nvgFill(vg);
+
+		switch (style) {
+		case CLOSE:
+			nvgFontSize(vg, 10f);
+			nvgFontFace(vg, "Segoe MDL2");
+			nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+			if (AppUI.getMainWindow().isActive() || highlight)
+				nvgFillColor(vg, Theme.rgba(255, 255, 255, 255, colorA));
+			else
+				nvgFillColor(vg, Theme.rgba(102, 102, 102, 255, colorA));
+			nvgText(vg, x + w * 0.5f, y + h * 0.5f, Theme.ICON_CHROME_CLOSE);
+			break;
+		case MAXIMIZE:
+			nvgFontSize(vg, 10f);
+			nvgFontFace(vg, "Segoe MDL2");
+			nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+			if (AppUI.getMainWindow().isActive() || highlight)
+				nvgFillColor(vg, Theme.rgba(255, 255, 255, 255, colorA));
+			else
+				nvgFillColor(vg, Theme.rgba(102, 102, 102, 255, colorA));
+			nvgText(vg, x + w * 0.5f, y + h * 0.5f, Theme.ICON_CHROME_MAXIMIZE);
+			break;
+		case MINIMIZE:
+			nvgFontSize(vg, 10f);
+			nvgFontFace(vg, "Segoe MDL2");
+			nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+			if (AppUI.getMainWindow().isActive() || highlight)
+				nvgFillColor(vg, Theme.rgba(255, 255, 255, 255, colorA));
+			else
+				nvgFillColor(vg, Theme.rgba(102, 102, 102, 255, colorA));
+			nvgText(vg, x + w * 0.5f, y + h * 0.5f + 1f, Theme.ICON_CHROME_MINIMIZE);
+			break;
+		case RESTORE:
+			nvgFontSize(vg, 10f);
+			nvgFontFace(vg, "Segoe MDL2");
+			nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+			if (AppUI.getMainWindow().isActive() || highlight)
+				nvgFillColor(vg, Theme.rgba(255, 255, 255, 255, colorA));
+			else
+				nvgFillColor(vg, Theme.rgba(102, 102, 102, 255, colorA));
+			nvgText(vg, x + w * 0.5f, y + h * 0.5f, Theme.ICON_CHROME_RESTORE);
+			break;
+		case LEFT_ARROW:
+			nvgFontSize(vg, 12f);
+			nvgFontFace(vg, "Segoe MDL2");
+			nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+			if (AppUI.getMainWindow().isActive() || highlight)
+				nvgFillColor(vg, Theme.rgba(255, 255, 255, 255, colorA));
+			else
+				nvgFillColor(vg, Theme.rgba(102, 102, 102, 255, colorA));
+			nvgText(vg, x + w * 0.5f, y + h * 0.5f, Theme.ICON_CHROME_BACK);
+			break;
+		case RIGHT_ARROW:
+			nvgFontSize(vg, 12f);
+			nvgFontFace(vg, "Segoe MDL2");
+			nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+			if (AppUI.getMainWindow().isActive() || highlight)
+				nvgFillColor(vg, Theme.rgba(255, 255, 255, 255, colorA));
+			else
+				nvgFillColor(vg, Theme.rgba(102, 102, 102, 255, colorA));
+			nvgText(vg, x + w * 0.5f, y + h * 0.5f, Theme.ICON_CHROME_BACK_MIRRORED);
+			break;
+		case NONE:
+			break;
+		}
+		nvgRestore(vg);
+	}
 
 	@Override
 	public float renderText(long vg, String text, String font, int align, float x, float y, float fontSize,
 			NVGColor color) {
+		nvgSave(vg);
+		nvgFontBlur(vg, 0);
 		nvgFontSize(vg, fontSize);
 		nvgFontFace(vg, font);
 		nvgTextAlign(vg, align);
@@ -97,6 +222,7 @@ public class NanoTheme implements ITheme {
 		nvgText(vg, x, y, text);
 		float[] bounds = new float[4];
 		nvgTextBounds(vg, x, y, text, bounds);
+		nvgRestore(vg);
 		return bounds[2];
 	}
 
@@ -174,35 +300,30 @@ public class NanoTheme implements ITheme {
 
 	@Override
 	public void renderButton(long vg, String preicon, String text, String font, String entypo, float x, float y,
-			float w, float h, boolean highlight, float fontSize) {
+			float w, float h, boolean highlight, float fontSize, float preiconSize) {
 		float tw, iw = 0;
 		nvgSave(vg);
 
 		nvgBeginPath(vg);
-		nvgRect(vg, x + 1, y + 1, w - 2, h - 2);
+		nvgRect(vg, x, y, w, h);
 		if (highlight)
 			nvgFillColor(vg, buttonHighlight);
 		else
 			nvgFillColor(vg, buttonColor);
 		nvgFill(vg);
 
-		nvgBeginPath(vg);
-		nvgRect(vg, x + 0.5f, y + 0.5f, w - 1, h - 1);
-		nvgStrokeColor(vg, Theme.rgba(0, 0, 0, 100, colorA));
-		nvgStroke(vg);
-
 		nvgFontSize(vg, fontSize);
 		nvgFontFace(vg, font);
 		tw = nvgTextBounds(vg, 0, 0, text, (FloatBuffer) null);
 		if (preicon != null) {
-			nvgFontSize(vg, h * 0.5f);
+			nvgFontSize(vg, preiconSize);
 			nvgFontFace(vg, entypo);
 			iw = nvgTextBounds(vg, 0, 0, preicon, (FloatBuffer) null);
 			iw += h * 0.15f;
 		}
 
 		if (preicon != null) {
-			nvgFontSize(vg, h * 0.5f);
+			nvgFontSize(vg, preiconSize);
 			nvgFontFace(vg, entypo);
 			nvgFillColor(vg, buttonTextColor);
 			if (text.isEmpty()) {
