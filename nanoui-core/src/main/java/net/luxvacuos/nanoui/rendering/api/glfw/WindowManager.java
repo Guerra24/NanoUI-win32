@@ -212,16 +212,16 @@ public final class WindowManager {
 		return (long) (getTime() * (1000L * 1000L * 1000L));
 	}
 
-	protected static GLFWCursorEnterCallback cursorEnterCallback;
-	protected static GLFWCursorPosCallback cursorPosCallback;
-	protected static GLFWMouseButtonCallback mouseButtonCallback;
-	protected static GLFWWindowSizeCallback windowSizeCallback;
-	protected static GLFWWindowPosCallback windowPosCallback;
-	protected static GLFWWindowRefreshCallback windowRefreshCallback;
-	protected static GLFWFramebufferSizeCallback framebufferSizeCallback;
-	protected static GLFWScrollCallback scrollCallback;
-	protected static GLFWWindowFocusCallback focusCallback;
-	protected static GLFWWindowMaximizeCallback maximizeCallback;
+	public static GLFWCursorEnterCallback cursorEnterCallback;
+	public static GLFWCursorPosCallback cursorPosCallback;
+	public static GLFWMouseButtonCallback mouseButtonCallback;
+	public static GLFWWindowSizeCallback windowSizeCallback;
+	public static GLFWWindowPosCallback windowPosCallback;
+	public static GLFWWindowRefreshCallback windowRefreshCallback;
+	public static GLFWFramebufferSizeCallback framebufferSizeCallback;
+	public static GLFWScrollCallback scrollCallback;
+	public static GLFWWindowFocusCallback focusCallback;
+	public static GLFWWindowMaximizeCallback maximizeCallback;
 
 	static {
 		cursorEnterCallback = new GLFWCursorEnterCallback() {

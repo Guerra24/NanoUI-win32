@@ -25,6 +25,7 @@ import static com.sun.jna.platform.win32.WinUser.SWP_NOZORDER;
 import static com.sun.jna.platform.win32.WinUser.SW_MAXIMIZE;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
 import static org.lwjgl.system.windows.User32.HTCAPTION;
+import static org.lwjgl.system.windows.User32.HTTOP;
 import static org.lwjgl.system.windows.User32.SWP_FRAMECHANGED;
 import static org.lwjgl.system.windows.User32.SWP_NOMOVE;
 import static org.lwjgl.system.windows.User32.SWP_NOSIZE;
@@ -32,7 +33,6 @@ import static org.lwjgl.system.windows.User32.WM_NCCALCSIZE;
 import static org.lwjgl.system.windows.User32.WM_NCHITTEST;
 
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.JNI;
 import org.lwjgl.system.windows.WindowProc;
@@ -51,6 +51,7 @@ import net.luxvacuos.nanoui.core.Variables;
 import net.luxvacuos.nanoui.core.states.AbstractState;
 import net.luxvacuos.nanoui.core.states.StateMachine;
 import net.luxvacuos.nanoui.input.KeyboardHandler;
+import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.ui.Alignment;
 import net.luxvacuos.nanoui.ui.Box;
 import net.luxvacuos.nanoui.ui.Button;
@@ -91,12 +92,14 @@ public class TestApp extends AbstractState {
 			public long invoke(long hw, int uMsg, long wParam, long lParam) {
 				switch (uMsg) {
 				case WM_NCHITTEST:
-					RECT wnd_rect = new RECT();
+					RECT rect = new RECT();
 					int x, y;
-					User32.INSTANCE.GetWindowRect(hwnd, wnd_rect);
-					x = Macros.GET_X_LPARAM(new LPARAM(lParam)) - wnd_rect.left - 8;
-					y = Macros.GET_Y_LPARAM(new LPARAM(lParam)) - wnd_rect.top;
-					if (window.getTitlebar().isInside(AppUI.getMainWindow(), x, y))
+					User32.INSTANCE.GetWindowRect(hwnd, rect);
+					x = Macros.GET_X_LPARAM(new LPARAM(lParam)) - 8;
+					y = Macros.GET_Y_LPARAM(new LPARAM(lParam));
+					if (y < rect.top + 6 && x >= rect.left && x <= rect.right - 16)
+						return HTTOP;
+					if (window.getTitlebar().isInside(AppUI.getMainWindow(), x - rect.left, y - rect.top))
 						return HTCAPTION;
 					else
 						return JNI.callPPPP(dwp, hw, uMsg, wParam, lParam);
@@ -136,6 +139,7 @@ public class TestApp extends AbstractState {
 		Box right = new Box(200, 0, 600, 0);
 		right.setColor("#8C8C8C8C");
 		right.setResizeV(true);
+		right.setResizeH(true);
 		TextArea text = new TextArea(
 				"Lorem ipsum dolor sit amet, ut dicta doctus pertinax ius. Te pro tantas eruditi, aperiri epicuri probatus sea eu. Duo ad ridens melius aeterno, ei eligendi laboramus voluptatum his. At graece hendrerit nec, ius homero patrioque an. Pro cu dicunt perpetua percipitur.\n"
 						+ "\n"
@@ -148,6 +152,7 @@ public class TestApp extends AbstractState {
 						+ "Sed ex nulla errem utroque, eu persius veritus volumus mea. Nisl legere qualisque ex mei, te eleifend pericula usu. Ea est aeque interpretaris. Pericula dissentias mel ei, te saperet utroque definiebas qui. Eripuit omittantur an vel, ius eu prompta delectus accusamus, eum et paulo audire prodesset. Cu denique mediocrem sit, mundi mediocrem ut vel. ",
 				214 + 20, -20, 600 - 40);
 		text.setWindowAlignment(Alignment.LEFT_TOP);
+		text.setResizeH(true);
 		window.addComponent(right);
 		window.addComponent(text);
 
@@ -162,7 +167,6 @@ public class TestApp extends AbstractState {
 		}
 		window.addComponent(left);
 		AppUI.getMainWindow().setVisible(true);
-
 	}
 
 	@Override
@@ -183,7 +187,8 @@ public class TestApp extends AbstractState {
 	public void render(float alpha) {
 		AppUI.clearBuffer(GL11.GL_COLOR_BUFFER_BIT);
 		AppUI.clearColors(0f, 0f, 0f, 0);
-		window.render(AppUI.getMainWindow());
+		Window wind = AppUI.getMainWindow();
+		window.render(wind);
 	}
 
 	public static void main(String[] args) {

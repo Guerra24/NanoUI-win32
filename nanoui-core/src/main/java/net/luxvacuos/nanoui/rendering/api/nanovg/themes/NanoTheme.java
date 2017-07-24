@@ -214,7 +214,6 @@ public class NanoTheme implements ITheme {
 	public float renderText(long vg, String text, String font, int align, float x, float y, float fontSize,
 			NVGColor color) {
 		nvgSave(vg);
-		nvgFontBlur(vg, 0);
 		nvgFontSize(vg, fontSize);
 		nvgFontFace(vg, font);
 		nvgTextAlign(vg, align);
@@ -485,7 +484,7 @@ public class NanoTheme implements ITheme {
 
 		// Knob
 		nvgBeginPath(vg);
-		nvgRect(vg, x + (int) (pos * w) - 5, y + 1, 10, h - 2);
+		nvgRect(vg, x + (pos * w) - 5, y + 1, 10, h - 2);
 		nvgFillColor(vg, Theme.rgba(200, 200, 200, 255, colorB));
 		nvgFill(vg);
 
@@ -494,7 +493,6 @@ public class NanoTheme implements ITheme {
 
 	@Override
 	public void renderScrollBarV(long vg, float x, float y, float w, float h, float pos, float sizeV) {
-		float scrollv;
 		float scrollBarSize = Variables.SCROLLBAR_SIZE;
 
 		nvgSave(vg);
@@ -504,10 +502,9 @@ public class NanoTheme implements ITheme {
 		nvgFillColor(vg, Theme.rgba(128, 128, 128, 140, colorB));
 		nvgFill(vg);
 
-		scrollv = (h / sizeV) * (h / 2);
 		nvgBeginPath(vg);
-		nvgRect(vg, x + w - scrollBarSize, y + scrollBarSize + (h - 8 - scrollv) * pos, scrollBarSize,
-				scrollv - scrollBarSize * 2f + 8);
+		nvgRect(vg, x + w - scrollBarSize, y + scrollBarSize + pos * (h - scrollBarSize * 2f - sizeV), scrollBarSize,
+				sizeV);
 		nvgFillColor(vg, Theme.rgba(220, 220, 220, 255, colorB));
 		nvgFill(vg);
 

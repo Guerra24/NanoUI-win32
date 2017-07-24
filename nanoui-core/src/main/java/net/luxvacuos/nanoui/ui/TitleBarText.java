@@ -28,12 +28,11 @@ public class TitleBarText extends Text {
 	public TitleBarText(String text, float x, float y) {
 		super(text, x, y);
 	}
-	
+
 	@Override
 	public void render(Window window) {
 		w = Theme.renderTitleBarText(window.getNVGID(), text, font, align, rootComponent.rootX + alignedX + 10,
-				window.getHeight() - rootComponent.rootY - alignedY, fontSize) - rootComponent.rootX + alignedX;
-		w /= 2f;
+				window.getHeight() - rootComponent.rootY - alignedY, fontSize) - rootComponent.rootX - alignedX + 10;
 	}
 
 }

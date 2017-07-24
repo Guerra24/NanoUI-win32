@@ -52,6 +52,7 @@ public class Button extends Component {
 	public void update(float delta, Window window) {
 		if (!enabled)
 			return;
+
 		inside = insideButton();
 		if (onPress != null)
 			if (pressed() || pressed) {
@@ -59,6 +60,7 @@ public class Button extends Component {
 					onPress.onAction();
 				pressed = pressed();
 			}
+
 		super.update(delta, window);
 	}
 
@@ -75,11 +77,10 @@ public class Button extends Component {
 			return false;
 	}
 
-
 	public void setText(String text) {
 		this.text = text;
 	}
-	
+
 	public void setOnButtonPress(OnAction onPress) {
 		this.onPress = onPress;
 	}
@@ -99,7 +100,7 @@ public class Button extends Component {
 	public void setFontSize(float fontSize) {
 		this.fontSize = fontSize;
 	}
-	
+
 	public void setPreiconSize(float preiconSize) {
 		this.preiconSize = preiconSize;
 	}

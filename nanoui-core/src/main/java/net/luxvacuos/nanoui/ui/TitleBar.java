@@ -102,14 +102,14 @@ public class TitleBar implements ITitleBar {
 
 	@Override
 	public boolean isInside(Window window) {
-		return Mouse.getX() > left.getFinalW() && Mouse.getY() < window.getHeight()
+		return Mouse.getX() >= left.getFinalW() && Mouse.getY() < window.getHeight()
 				&& Mouse.getX() < window.getWidth() + right.getFinalW()
 				&& Mouse.getY() > window.getHeight() - Variables.TITLEBAR_HEIGHT;
 	}
 
 	@Override
 	public boolean isInside(Window window, int x, int y) {
-		return x > left.getFinalW() && y < Variables.TITLEBAR_HEIGHT && x < window.getWidth() + right.getFinalW()
+		return x >= left.getFinalW() && y < Variables.TITLEBAR_HEIGHT && x < window.getWidth() + right.getFinalW()
 				&& y > 0;
 	}
 
