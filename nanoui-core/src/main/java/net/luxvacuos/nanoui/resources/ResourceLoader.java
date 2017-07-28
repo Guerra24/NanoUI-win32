@@ -76,11 +76,18 @@ public class ResourceLoader {
 	}
 
 	public int loadNVGTexture(String file) {
+		return loadNVGTexture(file, false);
+	}
+
+	public int loadNVGTexture(String filename, boolean file) {
 		int tex = 0;
 		try {
-			tex = loadNVGTexture(ioResourceToByteBuffer("assets/" + file + ".png", 8 * 1024));
+			if (!file)
+				tex = loadNVGTexture(ioResourceToByteBuffer("assets/" + filename + ".png", 8 * 1024));
+			else
+				tex = loadNVGTexture(ioResourceToByteBuffer(filename, 8 * 1024));
 		} catch (Exception e) {
-			throw new LoadTextureException(file, e);
+			throw new LoadTextureException(filename, e);
 		}
 		return tex;
 	}

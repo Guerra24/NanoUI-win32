@@ -43,7 +43,6 @@ import org.lwjgl.system.windows.WindowProc;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.WString;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.RECT;
@@ -68,9 +67,11 @@ import net.luxvacuos.nanoui.ui.Container;
 import net.luxvacuos.nanoui.ui.Direction;
 import net.luxvacuos.nanoui.ui.FlowLayout;
 import net.luxvacuos.win32.User32Ext;
+import net.luxvacuos.win32.User32Ext.ARW;
 import net.luxvacuos.win32.User32Ext.Accent;
 import net.luxvacuos.win32.User32Ext.AccentPolicy;
 import net.luxvacuos.win32.User32Ext.HSHELL;
+import net.luxvacuos.win32.User32Ext.MINIMIZEDMETRICS;
 import net.luxvacuos.win32.User32Ext.SPI;
 import net.luxvacuos.win32.User32Ext.WindowCompositionAttribute;
 import net.luxvacuos.win32.User32Ext.WindowCompositionAttributeData;
@@ -87,7 +88,7 @@ public class TaskBar extends AbstractState {
 	private int msgNotify;
 	private Container tasks;
 
-	public TaskBar() {
+	protected TaskBar() {
 		super("_main");
 	}
 
@@ -109,15 +110,26 @@ public class TaskBar extends AbstractState {
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
 		HWND hwnd = new HWND(new Pointer(hwndGLFW));
 
-		msgNotify = User32Ext.INSTANCE.RegisterWindowMessageA(new WString("SHELLHOOK"));
-		User32Ext.INSTANCE.RegisterShellHookWindow(hwnd);
+		MINIMIZEDMETRICS minMet = new MINIMIZEDMETRICS();
+		minMet.cbSize = minMet.size();
+		minMet.iWidth = 30;
+		minMet.iHorzGap = 1;
+		minMet.iVertGap = 1;
+		minMet.iArrange = ARW.ARW_HIDE;
+		minMet.write();
 
+		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETMINIMIZEDMETRICS, minMet.size(), minMet.getPointer(), 0);
+
+		User32Ext.INSTANCE.SetTaskmanWindow(hwnd);
+		User32Ext.INSTANCE.RegisterShellHookWindow(hwnd);
+		User32Ext.INSTANCE.SetShellWindow(hwnd);
+		msgNotify = User32Ext.INSTANCE.RegisterWindowMessage("SHELLHOOK");
 		long dwp = User32Ext.INSTANCE.GetWindowLongPtr(hwnd, GWL_WNDPROC);
 
 		WindowProc proc = new WindowProc() {
 			@Override
 			public long invoke(long hwnd, int uMsg, long wParam, long lParam) {
-				if (uMsg == 49195) {
+				if (uMsg == msgNotify) {
 					HWND hwndD = new HWND(new Pointer(lParam));
 					byte[] buffer = new byte[1024];
 					User32Ext.INSTANCE.GetWindowTextA(hwndD, buffer, buffer.length);
@@ -167,10 +179,10 @@ public class TaskBar extends AbstractState {
 		};
 		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, proc.address());
 		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
-
+		
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
-		accent.GradientColor = 0x7F7F7F7F;
+		accent.GradientColor = 0xC87F7F7F;
 		accent.AccentFlags = 2;
 		int accentStructSize = accent.size();
 		accent.write();
@@ -204,7 +216,7 @@ public class TaskBar extends AbstractState {
 		rc.bottom = info.rcWork.bottom;
 		rc.right = info.rcWork.right;
 		rc.left = info.rcWork.left;
-		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, rc, 0);
+		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, rc.getPointer(), 0);
 
 		Container startBtns = new Container(0, 0, 120, Variables.HEIGHT);
 		startBtns.setLayout(new FlowLayout(Direction.RIGHT, 0, 0));
@@ -316,7 +328,7 @@ public class TaskBar extends AbstractState {
 	public void dispose() {
 		super.dispose();
 		window.dispose(AppUI.getMainWindow());
-		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, old, 0);
+		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, old.getPointer(), 0);
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
 		HWND hwnd = new HWND(new Pointer(hwndGLFW));
 		User32Ext.INSTANCE.DeregisterShellHookWindow(hwnd);

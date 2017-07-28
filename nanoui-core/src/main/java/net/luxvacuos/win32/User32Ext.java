@@ -24,11 +24,9 @@ import java.util.List;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
-import com.sun.jna.WString;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.LRESULT;
-import com.sun.jna.platform.win32.WinDef.RECT;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.platform.win32.WinUser;
@@ -52,6 +50,9 @@ public interface User32Ext extends StdCallLibrary {
 	public interface SPI {
 		public static final int SPI_SETWORKAREA = 0x002F;
 		public static final int SPI_GETWORKAREA = 0x0030;
+		public static final int SPI_GETMINIMIZEDMETRICS = 0x002B;
+		public static final int SPI_SETMINIMIZEDMETRICS = 0x002C;
+		public static final int SPI_GETDESKWALLPAPER = 0x73;
 	}
 
 	public interface HSHELL {
@@ -65,6 +66,11 @@ public interface User32Ext extends StdCallLibrary {
 		public static final int HSHELL_LANGUAGE = 8;
 		public static final int HSHELL_ACCESSIBILITYSTATE = 11;
 		public static final int HSHELL_APPCOMMAND = 12;
+	}
+
+	public interface ARW {
+		public static final int ARW_BOTTOMLEFT = 0x0000;
+		public static final int ARW_HIDE = 0x0008;
 	}
 
 	public interface WindowCompositionAttribute {
@@ -97,6 +103,23 @@ public interface User32Ext extends StdCallLibrary {
 		}
 	}
 
+	public class MINIMIZEDMETRICS extends Structure implements Structure.ByReference {
+		public static final List<String> FIELDS = createFieldsOrder("cbSize", "iWidth", "iHorzGap", "iVertGap",
+				"iArrange");
+		public int cbSize;
+		public int iWidth;
+		public int iHorzGap;
+		public int iVertGap;
+		public int iArrange;
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return FIELDS;
+		}
+	}
+
+	public static final int MAX_PATH = 260;
+
 	public static final int KEYEVENTF_KEYDOWN = 0;
 	public static final int KEYEVENTF_EXTENDEDKEY = 1;
 	public static final int KEYEVENTF_KEYUP = 2;
@@ -108,7 +131,7 @@ public interface User32Ext extends StdCallLibrary {
 	public static final int VK_S = 0x53;
 	public static final int VK_LWIN = 0x5B;
 
-	public int RegisterWindowMessageA(WString lpString);
+	public int RegisterWindowMessage(String lpString);
 
 	public int DeregisterShellHookWindow(HWND hWnd);
 
@@ -116,7 +139,7 @@ public interface User32Ext extends StdCallLibrary {
 
 	public HRESULT SetWindowCompositionAttribute(HWND hwnd, WindowCompositionAttributeData data);
 
-	public boolean SystemParametersInfo(int uiAction, int uiParam, RECT pvParam, int fWinIni);
+	public boolean SystemParametersInfo(int uiAction, int uiParam, Pointer pvParam, int fWinIni);
 
 	boolean EnumWindows(WinUser.WNDENUMPROC lpEnumFunc, Pointer ptr);
 
@@ -133,7 +156,11 @@ public interface User32Ext extends StdCallLibrary {
 	public long SetWindowLongPtr(HWND hWnd, int nIndex, long dwNewLong);
 
 	public long GetClassLongPtr(HWND hwnd, int nIndex);
-	
+
 	public boolean ReleaseCapture();
+
+	public boolean SetShellWindow(HWND hwnd);
+
+	public boolean SetTaskmanWindow(HWND hwnd);
 
 }
