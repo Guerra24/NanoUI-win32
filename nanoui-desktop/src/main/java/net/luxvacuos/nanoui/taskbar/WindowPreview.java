@@ -72,7 +72,7 @@ public class WindowPreview extends AbstractState {
 
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
-		accent.GradientColor = 0x7F7F7F7F;
+		accent.GradientColor = 0xC8000000;
 		accent.AccentFlags = 2;
 		int accentStructSize = accent.size();
 		accent.write();

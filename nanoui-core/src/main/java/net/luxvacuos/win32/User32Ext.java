@@ -76,6 +76,12 @@ public interface User32Ext extends StdCallLibrary {
 	public interface WindowCompositionAttribute {
 		public static final int WCA_ACCENT_POLICY = 19;
 	}
+	
+	public interface NIM {
+		public static final int NIM_ADD = 0x00000000;
+		public static final int NIM_MODIFY = 0x00000001;
+		public static final int NIM_DELETE = 0x00000002;
+	}
 
 	public class AccentPolicy extends Structure implements Structure.ByReference {
 		public static final List<String> FIELDS = createFieldsOrder("AccentState", "AccentFlags", "GradientColor",
@@ -162,5 +168,7 @@ public interface User32Ext extends StdCallLibrary {
 	public boolean SetShellWindow(HWND hwnd);
 
 	public boolean SetTaskmanWindow(HWND hwnd);
+
+	public boolean SendNotifyMessage(HWND hwnd, int msg, WPARAM wParam, LPARAM lParam);
 
 }

@@ -23,11 +23,12 @@ package net.luxvacuos.nanoui.taskbar;
 import static com.sun.jna.platform.win32.WinUser.GWL_EXSTYLE;
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
+import static org.lwjgl.nanovg.NanoVG.nvgDeleteImage;
 import static org.lwjgl.system.windows.User32.HWND_BOTTOM;
 import static org.lwjgl.system.windows.User32.SWP_NOACTIVATE;
 import static org.lwjgl.system.windows.User32.SWP_NOMOVE;
-import static org.lwjgl.system.windows.User32.SWP_NOZORDER;
 import static org.lwjgl.system.windows.User32.SWP_NOSIZE;
+import static org.lwjgl.system.windows.User32.SWP_NOZORDER;
 import static org.lwjgl.system.windows.User32.WM_WINDOWPOSCHANGING;
 import static org.lwjgl.system.windows.User32.WS_EX_TOOLWINDOW;
 
@@ -36,6 +37,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.JNI;
 import org.lwjgl.system.windows.WindowProc;
+import org.lwjgl.system.windows.WindowProcI;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -43,12 +45,13 @@ import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HWND;
 
-import net.luxvacuos.nanoui.bootstrap.Bootstrap;
-import net.luxvacuos.nanoui.core.App;
 import net.luxvacuos.nanoui.core.AppUI;
 import net.luxvacuos.nanoui.core.Variables;
 import net.luxvacuos.nanoui.core.states.AbstractState;
+import net.luxvacuos.nanoui.rendering.api.glfw.PixelBufferHandle;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
+import net.luxvacuos.nanoui.rendering.api.glfw.WindowHandle;
+import net.luxvacuos.nanoui.rendering.api.glfw.WindowManager;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 import net.luxvacuos.win32.DWMapiExt.WINDOWPOS;
 import net.luxvacuos.win32.User32Ext;
@@ -57,31 +60,36 @@ import net.luxvacuos.win32.User32Ext.SPI;
 public class Background extends AbstractState {
 
 	private int wallpaper;
+	private Window window;
+	private WindowHandle handle;
 
-	protected Background() {
+	protected Background(Window backWindow, WindowHandle handle) {
 		super("_main");
+		this.window = backWindow;
+		this.handle = handle;
 	}
 
 	@Override
 	public void init() {
 		super.init();
+		WindowManager.createWindow(handle, window, true);
 
-		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
+		long hwndGLFW = glfwGetWin32Window(window.getID());
 		HWND hwnd = new HWND(new Pointer(hwndGLFW));
-		AppUI.getMainWindow().setVisible(true);
+		window.setVisible(true);
 
-		long dwp = User32.INSTANCE.GetWindowLongPtr(hwnd, GWL_WNDPROC).longValue();
 		WindowProc proc = new WindowProc() {
 
 			@Override
 			public long invoke(long hw, int uMsg, long wParam, long lParam) {
-				switch (uMsg) {
-				case WM_WINDOWPOSCHANGING:
-					WINDOWPOS pos = new WINDOWPOS(new Pointer(lParam));
-					pos.flags |= SWP_NOZORDER;
-					pos.write();
-				}
-				return JNI.callPPPP(dwp, hw, uMsg, wParam, lParam);
+				if (hw == hwndGLFW)
+					switch (uMsg) {
+					case WM_WINDOWPOSCHANGING:
+						WINDOWPOS pos = new WINDOWPOS(new Pointer(lParam));
+						pos.flags |= SWP_NOZORDER | SWP_NOACTIVATE;
+						pos.write();
+					}
+				return org.lwjgl.system.windows.User32.DefWindowProc(hw, uMsg, wParam, lParam);
 			}
 		};
 		User32.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, new Pointer(proc.address()));
@@ -89,7 +97,13 @@ public class Background extends AbstractState {
 
 		User32.INSTANCE.SetWindowPos(hwnd, new HWND(new Pointer(HWND_BOTTOM)), 0, 0, 0, 0,
 				SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-		wallpaper = AppUI.getMainWindow().getResourceLoader().loadNVGTexture(getCurrentDesktopWallpaper(), true);
+		wallpaper = window.getResourceLoader().loadNVGTexture(getCurrentDesktopWallpaper(), true);
+	}
+
+	@Override
+	public void dispose() {
+		super.dispose();
+		nvgDeleteImage(window.getNVGID(), wallpaper);
 	}
 
 	@Override
@@ -100,7 +114,6 @@ public class Background extends AbstractState {
 	public void render(float alpha) {
 		AppUI.clearBuffer(GL11.GL_COLOR_BUFFER_BIT);
 		AppUI.clearColors(0f, 0f, 0f, 1);
-		Window window = AppUI.getMainWindow();
 		window.beingNVGFrame();
 		Theme.renderBox(window.getNVGID(), 0, 0, window.getWidth(), window.getHeight(),
 				Theme.setColor(1, 1, 1, 1, Theme.colorA), 0, 0, 0, 0);
@@ -115,18 +128,10 @@ public class Background extends AbstractState {
 		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_GETDESKWALLPAPER, currentWallpaper.length(), m, 0);
 		currentWallpaper = m.getWideString(0);
 		return currentWallpaper;
-
 	}
 
-	public static void main(String[] args) {
-		new Bootstrap(args);
-		GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-		Variables.WIDTH = vidmode.width();
-		Variables.HEIGHT = vidmode.height() + 1;
-		Variables.X = 0;
-		Variables.Y = -1;
-		Variables.DECORATED = false;
-		new App(new Background());
+	public Window getWindow() {
+		return window;
 	}
 
 }

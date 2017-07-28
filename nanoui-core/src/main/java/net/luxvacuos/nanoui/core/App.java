@@ -54,9 +54,9 @@ public class App {
 	public void update() {
 		float delta = 0;
 		float accumulator = 0f;
-		float interval = 1f / 60;
+		float interval = 1f / 30;
 		float alpha = 0;
-		int fps = 60;
+		int fps = 30;
 		Window window = AppUI.getMainWindow();
 		while (StateMachine.isRunning() && !(window.isCloseRequested())) {
 			delta = window.getDelta();

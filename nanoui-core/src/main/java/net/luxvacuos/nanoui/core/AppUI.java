@@ -40,7 +40,6 @@ public class AppUI {
 	private Font poppinsRegular, poppinsLight, poppinsMedium, poppinsBold, poppinsSemiBold, entypo, segoeui, segoemdl2;
 
 	public void init() {
-
 		WindowHandle handle = WindowManager.generateHandle(Variables.WIDTH, Variables.HEIGHT, Variables.TITLE);
 		handle.isDecorated(Variables.DECORATED);
 		handle.isVisible(false);
@@ -49,8 +48,8 @@ public class AppUI {
 		pb.setSrgbCapable(1);
 		pb.setSamples(4);
 		handle.setPixelBuffer(pb);
-		long gameWindowID = WindowManager.createWindow(handle, true);
-		window = WindowManager.getWindow(gameWindowID);
+		window = WindowManager.generate(handle);
+		WindowManager.createWindow(handle, window, true);
 		Mouse.setWindow(window);
 		Theme.setTheme(new NanoTheme());
 

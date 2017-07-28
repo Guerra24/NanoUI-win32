@@ -23,11 +23,10 @@ package net.luxvacuos.nanoui.taskbar;
 import static com.sun.jna.platform.win32.WinUser.GWL_EXSTYLE;
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
 import static com.sun.jna.platform.win32.WinUser.MONITOR_DEFAULTTOPRIMARY;
-import static com.sun.jna.platform.win32.WinUser.SW_HIDE;
 import static com.sun.jna.platform.win32.WinUser.SW_MAXIMIZE;
 import static com.sun.jna.platform.win32.WinUser.SW_RESTORE;
-import static com.sun.jna.platform.win32.WinUser.SW_SHOW;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
+import static org.lwjgl.system.windows.User32.WM_COPYDATA;
 import static org.lwjgl.system.windows.User32.WS_EX_TOOLWINDOW;
 
 import java.util.ArrayList;
@@ -45,7 +44,10 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HWND;
+import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.RECT;
+import com.sun.jna.platform.win32.WinDef.WPARAM;
+import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.platform.win32.WinUser.HMONITOR;
 import com.sun.jna.platform.win32.WinUser.MONITORINFO;
 import com.sun.jna.platform.win32.WinUser.WINDOWPLACEMENT;
@@ -58,6 +60,10 @@ import net.luxvacuos.nanoui.core.Variables;
 import net.luxvacuos.nanoui.core.states.AbstractState;
 import net.luxvacuos.nanoui.core.states.StateMachine;
 import net.luxvacuos.nanoui.input.KeyboardHandler;
+import net.luxvacuos.nanoui.rendering.api.glfw.PixelBufferHandle;
+import net.luxvacuos.nanoui.rendering.api.glfw.Window;
+import net.luxvacuos.nanoui.rendering.api.glfw.WindowHandle;
+import net.luxvacuos.nanoui.rendering.api.glfw.WindowManager;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 import net.luxvacuos.nanoui.ui.Alignment;
 import net.luxvacuos.nanoui.ui.Button;
@@ -83,10 +89,11 @@ public class TaskBar extends AbstractState {
 	private Map<HWND, WindowButton> windows = new HashMap<>();
 
 	private RECT old;
-	private HWND taskbar;
 	private ComponentWindow window;
 	private int msgNotify;
 	private Container tasks;
+	private Background backgroundWindow;
+	private boolean running = true;
 
 	protected TaskBar() {
 		super("_main");
@@ -174,15 +181,19 @@ public class TaskBar extends AbstractState {
 						break;
 					}
 				}
+				switch (uMsg) {
+				case WM_COPYDATA:
+					break;
+				}
 				return JNI.callPPPP(dwp, hwnd, uMsg, wParam, lParam);
 			}
 		};
 		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, proc.address());
 		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
-		
+
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
-		accent.GradientColor = 0xC87F7F7F;
+		accent.GradientColor = 0xC8000000;
 		accent.AccentFlags = 2;
 		int accentStructSize = accent.size();
 		accent.write();
@@ -198,12 +209,6 @@ public class TaskBar extends AbstractState {
 		HMONITOR monitor = User32.INSTANCE.MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
 		MONITORINFO info = new MONITORINFO();
 		User32.INSTANCE.GetMonitorInfo(monitor, info);
-
-		taskbar = User32.INSTANCE.FindWindow("Shell_TrayWnd", null);
-
-		if (taskbar != null) {
-			User32.INSTANCE.ShowWindow(taskbar, SW_HIDE);
-		}
 
 		old = new RECT();
 		old.top = info.rcWork.top;
@@ -320,29 +325,75 @@ public class TaskBar extends AbstractState {
 		window.addComponent(startBtns);
 		window.addComponent(tasks);
 		window.addComponent(rightBtns);
+
+		Variables.X = 0;
+		Variables.Y = -1;
+		GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+		WindowHandle handle = WindowManager.generateHandle(vidmode.width(), vidmode.height(), "");
+		handle.isDecorated(false);
+		handle.isVisible(false);
+		PixelBufferHandle pb = new PixelBufferHandle();
+		pb.setSrgbCapable(1);
+		pb.setSamples(4);
+		handle.setPixelBuffer(pb);
+		Window backWindow = WindowManager.generate(handle);
+
+		Thread backThr = new Thread(() -> {
+			backgroundWindow = new Background(backWindow, handle);
+			backgroundWindow.init();
+			float delta = 0;
+			float accumulator = 0f;
+			float interval = 1f / 5;
+			float alpha = 0;
+			int fps = 5;
+			Window window = backgroundWindow.getWindow();
+			while (running) {
+				delta = window.getDelta();
+				accumulator += delta;
+				while (accumulator >= interval) {
+					backgroundWindow.update(interval);
+					accumulator -= interval;
+				}
+				alpha = accumulator / interval;
+				backgroundWindow.render(alpha);
+				window.updateDisplay(fps);
+			}
+			backgroundWindow.dispose();
+			window.dispose();
+		});
+		backThr.setDaemon(true);
+		backThr.start();
 		AppUI.getMainWindow().setVisible(true);
+		User32Ext.INSTANCE.SendNotifyMessage(WinUser.HWND_BROADCAST,
+				User32Ext.INSTANCE.RegisterWindowMessage("TaskbarCreated"), new WPARAM(), new LPARAM());
+		
+
+		if (User32.INSTANCE.FindWindow("Shell_TrayWnd", null) != null) {
+			System.out.println("Taskbar!");
+		}
+
 		System.gc();
 	}
 
 	@Override
 	public void dispose() {
 		super.dispose();
+		backgroundWindow.getWindow().closeDisplay();
 		window.dispose(AppUI.getMainWindow());
 		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, old.getPointer(), 0);
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
 		HWND hwnd = new HWND(new Pointer(hwndGLFW));
 		User32Ext.INSTANCE.DeregisterShellHookWindow(hwnd);
-		if (taskbar != null) {
-			User32.INSTANCE.ShowWindow(taskbar, SW_SHOW);
-		}
 	}
 
 	@Override
 	public void update(float delta) {
 		window.update(delta, AppUI.getMainWindow());
 		KeyboardHandler kbh = AppUI.getMainWindow().getKeyboardHandler();
-		if (kbh.isShiftPressed() && kbh.isKeyPressed(GLFW.GLFW_KEY_ESCAPE))
+		if (kbh.isShiftPressed() && kbh.isKeyPressed(GLFW.GLFW_KEY_ESCAPE)) {
+			running = false;
 			StateMachine.stop();
+		}
 	}
 
 	@Override
@@ -361,6 +412,7 @@ public class TaskBar extends AbstractState {
 		Variables.Y = vidmode.height() - 40;
 		Variables.ALWAYS_ON_TOP = true;
 		Variables.DECORATED = false;
+		Variables.TITLE = "Shell_TrayWnd";
 		new App(new TaskBar());
 	}
 

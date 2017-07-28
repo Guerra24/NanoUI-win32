@@ -20,13 +20,15 @@
 
 package net.luxvacuos.nanoui.rendering.api.glfw;
 
-import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
 import static org.lwjgl.glfw.GLFW.glfwHideWindow;
 import static org.lwjgl.glfw.GLFW.glfwSetCursorEnterCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetScrollCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowMaximizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowPosCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowRefreshCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
@@ -39,9 +41,20 @@ import static org.lwjgl.opengl.GL11.glViewport;
 
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWCursorEnterCallback;
+import org.lwjgl.glfw.GLFWCursorPosCallback;
+import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
+import org.lwjgl.glfw.GLFWMouseButtonCallback;
+import org.lwjgl.glfw.GLFWScrollCallback;
+import org.lwjgl.glfw.GLFWWindowFocusCallback;
+import org.lwjgl.glfw.GLFWWindowMaximizeCallback;
+import org.lwjgl.glfw.GLFWWindowPosCallback;
+import org.lwjgl.glfw.GLFWWindowRefreshCallback;
+import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.opengl.GLCapabilities;
 
 import net.luxvacuos.nanoui.input.KeyboardHandler;
+import net.luxvacuos.nanoui.input.Mouse;
 import net.luxvacuos.nanoui.resources.ResourceLoader;
 
 public abstract class AbstractWindow implements IWindow {
@@ -78,6 +91,17 @@ public abstract class AbstractWindow implements IWindow {
 	protected double lastLoopTime;
 	protected float timeCount;
 
+	protected GLFWCursorEnterCallback cursorEnterCallback;
+	protected GLFWCursorPosCallback cursorPosCallback;
+	protected GLFWMouseButtonCallback mouseButtonCallback;
+	protected GLFWWindowSizeCallback windowSizeCallback;
+	protected GLFWWindowPosCallback windowPosCallback;
+	protected GLFWWindowRefreshCallback windowRefreshCallback;
+	protected GLFWFramebufferSizeCallback framebufferSizeCallback;
+	protected GLFWScrollCallback scrollCallback;
+	protected GLFWWindowFocusCallback focusCallback;
+	protected GLFWWindowMaximizeCallback maximizeCallback;
+
 	protected AbstractWindow(long windowID, int width, int height) {
 		this.windowID = windowID;
 		this.displayUtils = new DisplayUtils();
@@ -89,16 +113,99 @@ public abstract class AbstractWindow implements IWindow {
 
 	protected void setCallbacks() {
 		this.kbHandle = new KeyboardHandler(this.windowID);
-		glfwSetCursorEnterCallback(windowID, WindowManager.cursorEnterCallback);
-		glfwSetCursorPosCallback(windowID, WindowManager.cursorPosCallback);
-		glfwSetMouseButtonCallback(windowID, WindowManager.mouseButtonCallback);
-		glfwSetWindowSizeCallback(windowID, WindowManager.windowSizeCallback);
-		glfwSetWindowPosCallback(windowID, WindowManager.windowPosCallback);
-		glfwSetWindowRefreshCallback(windowID, WindowManager.windowRefreshCallback);
-		glfwSetFramebufferSizeCallback(windowID, WindowManager.framebufferSizeCallback);
-		glfwSetScrollCallback(windowID, WindowManager.scrollCallback);
-		glfwSetWindowMaximizeCallback(windowID, WindowManager.maximizeCallback);
-		glfwSetWindowFocusCallback(windowID, WindowManager.focusCallback);
+		cursorEnterCallback = new GLFWCursorEnterCallback() {
+			@Override
+			public void invoke(long windowID, boolean entered) {
+				Mouse.setMouseInsideWindow(entered);
+			}
+		};
+
+		cursorPosCallback = new GLFWCursorPosCallback() {
+			@Override
+			public void invoke(long windowID, double xpos, double ypos) {
+				Mouse.addMoveEvent(xpos, ypos);
+			}
+		};
+
+		mouseButtonCallback = new GLFWMouseButtonCallback() {
+			@Override
+			public void invoke(long windowID, int button, int action, int mods) {
+				Mouse.addButtonEvent(button, action == GLFW.GLFW_PRESS ? true : false);
+			}
+		};
+
+		scrollCallback = new GLFWScrollCallback() {
+			@Override
+			public void invoke(long window, double xoffset, double yoffset) {
+				Mouse.addWheelEvent((int) yoffset);
+			}
+		};
+
+		windowSizeCallback = new GLFWWindowSizeCallback() {
+			@Override
+			public void invoke(long windowID, int ww, int wh) {
+				int[] w = new int[1];
+				int[] h = new int[1];
+				GLFW.glfwGetFramebufferSize(windowID, w, h);
+				framebufferWidth = w[0];
+				framebufferHeight = h[0];
+
+				width = ww;
+				height = wh;
+				pixelRatio = (float) framebufferWidth / (float) width;
+				resetViewport();
+			}
+		};
+
+		windowPosCallback = new GLFWWindowPosCallback() {
+			@Override
+			public void invoke(long windowID, int xpos, int ypos) {
+				posX = xpos;
+				posY = ypos;
+			}
+		};
+
+		windowRefreshCallback = new GLFWWindowRefreshCallback() {
+			@Override
+			public void invoke(long windowID) {
+				dirty = true;
+				GLFW.glfwSwapBuffers(windowID);
+			}
+		};
+
+		framebufferSizeCallback = new GLFWFramebufferSizeCallback() {
+			@Override
+			public void invoke(long windowID, int width, int height) {
+				framebufferWidth = width;
+				framebufferHeight = height;
+			}
+		};
+
+		focusCallback = new GLFWWindowFocusCallback() {
+
+			@Override
+			public void invoke(long windowID, boolean focused) {
+				active = focused;
+			}
+		};
+
+		maximizeCallback = new GLFWWindowMaximizeCallback() {
+
+			@Override
+			public void invoke(long windowID, boolean max) {
+				maximized = max;
+			}
+		};
+		glfwSetCursorEnterCallback(windowID, cursorEnterCallback);
+		glfwSetCursorPosCallback(windowID, cursorPosCallback);
+		glfwSetMouseButtonCallback(windowID, mouseButtonCallback);
+		glfwSetWindowSizeCallback(windowID, windowSizeCallback);
+		glfwSetWindowPosCallback(windowID, windowPosCallback);
+		glfwSetWindowRefreshCallback(windowID, windowRefreshCallback);
+		glfwSetFramebufferSizeCallback(windowID, framebufferSizeCallback);
+		glfwSetScrollCallback(windowID, scrollCallback);
+		glfwSetWindowMaximizeCallback(windowID, maximizeCallback);
+		glfwSetWindowFocusCallback(windowID, focusCallback);
 	}
 
 	@Override
@@ -207,11 +314,11 @@ public abstract class AbstractWindow implements IWindow {
 	public boolean isCloseRequested() {
 		return glfwWindowShouldClose(this.windowID);
 	}
-	
+
 	public boolean isActive() {
 		return active;
 	}
-	
+
 	public boolean isMaximized() {
 		return maximized;
 	}
@@ -236,7 +343,8 @@ public abstract class AbstractWindow implements IWindow {
 
 	@Override
 	public void closeDisplay() {
-		nvgDelete(this.nvgID);
+		if (!this.created)
+			return;
 		Callbacks.glfwFreeCallbacks(this.windowID);
 		glfwDestroyWindow(this.windowID);
 		this.created = false;
@@ -244,6 +352,7 @@ public abstract class AbstractWindow implements IWindow {
 
 	@Override
 	public void dispose() {
+		nvgDelete(this.nvgID);
 	}
 
 	public void setWindowTitle(String text) {

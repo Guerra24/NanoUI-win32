@@ -33,17 +33,7 @@ import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWCursorEnterCallback;
-import org.lwjgl.glfw.GLFWCursorPosCallback;
-import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWImage;
-import org.lwjgl.glfw.GLFWMouseButtonCallback;
-import org.lwjgl.glfw.GLFWScrollCallback;
-import org.lwjgl.glfw.GLFWWindowFocusCallback;
-import org.lwjgl.glfw.GLFWWindowMaximizeCallback;
-import org.lwjgl.glfw.GLFWWindowPosCallback;
-import org.lwjgl.glfw.GLFWWindowRefreshCallback;
-import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.nanovg.NanoVGGL3;
 import org.lwjgl.opengl.GL;
 
@@ -52,7 +42,6 @@ import com.badlogic.gdx.utils.Array;
 import net.luxvacuos.nanoui.core.Variables;
 import net.luxvacuos.nanoui.core.exception.DecodeTextureException;
 import net.luxvacuos.nanoui.core.exception.GLFWException;
-import net.luxvacuos.nanoui.core.states.StateMachine;
 import net.luxvacuos.nanoui.input.Mouse;
 import net.luxvacuos.nanoui.resources.ResourceLoader;
 
@@ -67,14 +56,27 @@ public final class WindowManager {
 		return new WindowHandle(width, height, title);
 	}
 
-	public static long createWindow(WindowHandle handle, boolean vsync) {
+	public static Window generate(WindowHandle handle) {
 		long windowID = GLFW.glfwCreateWindow(handle.width, handle.height, handle.title, NULL, NULL);
 		if (windowID == NULL)
 			throw new GLFWException("Failed to create GLFW Window '" + handle.title + "'");
-
 		Window window = new Window(windowID, handle.width, handle.height);
-
 		GLFW.glfwSetWindowPos(windowID, Variables.X, Variables.Y);
+		int[] h = new int[1];
+		int[] w = new int[1];
+
+		GLFW.glfwGetFramebufferSize(windowID, w, h);
+		window.framebufferHeight = h[0];
+		window.framebufferWidth = w[0];
+		GLFW.glfwGetWindowSize(windowID, w, h);
+		window.height = h[0];
+		window.width = w[0];
+		window.pixelRatio = (float) window.framebufferWidth / (float) window.width;
+		return window;
+	}
+
+	public static void createWindow(WindowHandle handle, Window window, boolean vsync) {
+		long windowID = window.getID();
 		GLFW.glfwMakeContextCurrent(windowID);
 		GLFW.glfwSwapInterval(vsync ? 1 : 0);
 
@@ -140,8 +142,7 @@ public final class WindowManager {
 
 		}
 
-		boolean forwardCompat = GLFW.glfwGetWindowAttrib(windowID, GLFW.GLFW_OPENGL_FORWARD_COMPAT) == GLFW.GLFW_TRUE;
-		window.capabilities = GL.createCapabilities(forwardCompat);
+		window.capabilities = GL.createCapabilities(true);
 
 		int nvgFlags = NanoVGGL3.NVG_ANTIALIAS | NanoVGGL3.NVG_STENCIL_STROKES;
 		if (Variables.DEBUG)
@@ -153,23 +154,9 @@ public final class WindowManager {
 
 		window.lastLoopTime = getTime();
 
-		int[] h = new int[1];
-		int[] w = new int[1];
-
-		GLFW.glfwGetFramebufferSize(windowID, w, h);
-		window.framebufferHeight = h[0];
-		window.framebufferWidth = w[0];
-		GLFW.glfwGetWindowSize(windowID, w, h);
-		window.height = h[0];
-		window.width = w[0];
-		window.pixelRatio = (float) window.framebufferWidth / (float) window.width;
 		window.resetViewport();
-
 		window.created = true;
-
 		windows.add(window);
-
-		return windowID;
 	}
 
 	public static Window getWindow(long windowID) {
@@ -177,11 +164,7 @@ public final class WindowManager {
 			if (window.windowID == windowID) {
 				int index = windows.indexOf(window, true);
 				if (index != 0)
-					windows.swap(0, index); // Swap the window to the front of
-											// the array to speed up future
-											// recurring searches
-				if (GLFW.glfwGetCurrentContext() != windowID)
-					GLFW.glfwMakeContextCurrent(windowID);
+					windows.swap(0, index);
 				return window;
 			}
 
@@ -210,125 +193,6 @@ public final class WindowManager {
 
 	public static long getNanoTime() {
 		return (long) (getTime() * (1000L * 1000L * 1000L));
-	}
-
-	public static GLFWCursorEnterCallback cursorEnterCallback;
-	public static GLFWCursorPosCallback cursorPosCallback;
-	public static GLFWMouseButtonCallback mouseButtonCallback;
-	public static GLFWWindowSizeCallback windowSizeCallback;
-	public static GLFWWindowPosCallback windowPosCallback;
-	public static GLFWWindowRefreshCallback windowRefreshCallback;
-	public static GLFWFramebufferSizeCallback framebufferSizeCallback;
-	public static GLFWScrollCallback scrollCallback;
-	public static GLFWWindowFocusCallback focusCallback;
-	public static GLFWWindowMaximizeCallback maximizeCallback;
-
-	static {
-		cursorEnterCallback = new GLFWCursorEnterCallback() {
-			@Override
-			public void invoke(long windowID, boolean entered) {
-				Mouse.setMouseInsideWindow(entered);
-			}
-		};
-
-		cursorPosCallback = new GLFWCursorPosCallback() {
-			@Override
-			public void invoke(long windowID, double xpos, double ypos) {
-				Mouse.addMoveEvent(xpos, ypos);
-			}
-		};
-
-		mouseButtonCallback = new GLFWMouseButtonCallback() {
-			@Override
-			public void invoke(long windowID, int button, int action, int mods) {
-				Mouse.addButtonEvent(button, action == GLFW.GLFW_PRESS ? true : false);
-			}
-		};
-
-		scrollCallback = new GLFWScrollCallback() {
-			@Override
-			public void invoke(long window, double xoffset, double yoffset) {
-				Mouse.addWheelEvent((int) yoffset);
-			}
-		};
-
-		windowSizeCallback = new GLFWWindowSizeCallback() {
-			@Override
-			public void invoke(long windowID, int width, int height) {
-				Window window = getWindow(windowID);
-				if (window == null)
-					return;
-
-				int[] w = new int[1];
-				int[] h = new int[1];
-				GLFW.glfwGetFramebufferSize(windowID, w, h);
-				window.framebufferWidth = w[0];
-				window.framebufferHeight = h[0];
-
-				window.width = width;
-				window.height = height;
-				window.pixelRatio = (float) window.framebufferWidth / (float) window.width;
-				window.resetViewport();
-			}
-		};
-
-		windowPosCallback = new GLFWWindowPosCallback() {
-			@Override
-			public void invoke(long windowID, int xpos, int ypos) {
-				Window window = getWindow(windowID);
-				if (window == null)
-					return;
-				window.posX = xpos;
-				window.posY = ypos;
-			}
-		};
-
-		windowRefreshCallback = new GLFWWindowRefreshCallback() {
-			@Override
-			public void invoke(long windowID) {
-				Window window = getWindow(windowID);
-				if (window == null)
-					return;
-				window.dirty = true;
-				StateMachine.update(0);
-				StateMachine.render(0);
-				GLFW.glfwSwapBuffers(windowID);
-			}
-		};
-
-		framebufferSizeCallback = new GLFWFramebufferSizeCallback() {
-			@Override
-			public void invoke(long windowID, int width, int height) {
-				Window window = getWindow(windowID);
-				if (window == null)
-					return;
-				window.framebufferWidth = width;
-				window.framebufferHeight = height;
-			}
-		};
-		
-		focusCallback = new GLFWWindowFocusCallback() {
-			
-			@Override
-			public void invoke(long windowID, boolean focused) {
-				Window window = getWindow(windowID);
-				if (window == null)
-					return;
-				window.active = focused;
-			}
-		};
-		
-		maximizeCallback = new GLFWWindowMaximizeCallback() {
-			
-			@Override
-			public void invoke(long windowID, boolean maximized) {
-				Window window = getWindow(windowID);
-				if (window == null)
-					return;
-				window.maximized = maximized;
-			}
-		};
-
 	}
 
 }
