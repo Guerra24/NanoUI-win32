@@ -32,12 +32,8 @@ import static org.lwjgl.system.windows.User32.SWP_NOZORDER;
 import static org.lwjgl.system.windows.User32.WM_WINDOWPOSCHANGING;
 import static org.lwjgl.system.windows.User32.WS_EX_TOOLWINDOW;
 
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.JNI;
 import org.lwjgl.system.windows.WindowProc;
-import org.lwjgl.system.windows.WindowProcI;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -46,9 +42,8 @@ import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HWND;
 
 import net.luxvacuos.nanoui.core.AppUI;
-import net.luxvacuos.nanoui.core.Variables;
+import net.luxvacuos.nanoui.core.TaskManager;
 import net.luxvacuos.nanoui.core.states.AbstractState;
-import net.luxvacuos.nanoui.rendering.api.glfw.PixelBufferHandle;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.glfw.WindowHandle;
 import net.luxvacuos.nanoui.rendering.api.glfw.WindowManager;
@@ -76,7 +71,6 @@ public class Background extends AbstractState {
 
 		long hwndGLFW = glfwGetWin32Window(window.getID());
 		HWND hwnd = new HWND(new Pointer(hwndGLFW));
-		window.setVisible(true);
 
 		WindowProc proc = new WindowProc() {
 
@@ -98,6 +92,7 @@ public class Background extends AbstractState {
 		User32.INSTANCE.SetWindowPos(hwnd, new HWND(new Pointer(HWND_BOTTOM)), 0, 0, 0, 0,
 				SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 		wallpaper = window.getResourceLoader().loadNVGTexture(getCurrentDesktopWallpaper(), true);
+		TaskManager.addTask(() -> window.setVisible(true));
 	}
 
 	@Override

@@ -22,13 +22,21 @@ package net.luxvacuos.nanoui.taskbar;
 
 import static com.sun.jna.platform.win32.WinUser.GWL_EXSTYLE;
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
+import static com.sun.jna.platform.win32.WinUser.MOD_NOREPEAT;
+import static com.sun.jna.platform.win32.WinUser.MOD_WIN;
 import static com.sun.jna.platform.win32.WinUser.MONITOR_DEFAULTTOPRIMARY;
+import static com.sun.jna.platform.win32.WinUser.SW_HIDE;
 import static com.sun.jna.platform.win32.WinUser.SW_MAXIMIZE;
 import static com.sun.jna.platform.win32.WinUser.SW_RESTORE;
+import static com.sun.jna.platform.win32.WinUser.SW_SHOW;
+import static com.sun.jna.platform.win32.WinUser.WM_HOTKEY;
+import static com.sun.jna.platform.win32.WinUser.WM_QUIT;
+import static net.luxvacuos.win32.User32Ext.VK_E;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
 import static org.lwjgl.system.windows.User32.WM_COPYDATA;
 import static org.lwjgl.system.windows.User32.WS_EX_TOOLWINDOW;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +50,7 @@ import org.lwjgl.system.windows.WindowProc;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
@@ -50,6 +59,7 @@ import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.platform.win32.WinUser.HMONITOR;
 import com.sun.jna.platform.win32.WinUser.MONITORINFO;
+import com.sun.jna.platform.win32.WinUser.MSG;
 import com.sun.jna.platform.win32.WinUser.WINDOWPLACEMENT;
 import com.sun.jna.platform.win32.WinUser.WNDENUMPROC;
 
@@ -89,11 +99,19 @@ public class TaskBar extends AbstractState {
 	private Map<HWND, WindowButton> windows = new HashMap<>();
 
 	private RECT old;
+	private MINIMIZEDMETRICS oldMM;
 	private ComponentWindow window;
 	private int msgNotify;
 	private Container tasks;
 	private Background backgroundWindow;
+	private ContextWindow contextWindow;
 	private boolean running = true;
+
+	private int keysThreadID;
+
+	private HWND taskbar;
+
+	private boolean noExplorer = false;
 
 	protected TaskBar() {
 		super("_main");
@@ -117,20 +135,28 @@ public class TaskBar extends AbstractState {
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
 		HWND hwnd = new HWND(new Pointer(hwndGLFW));
 
-		MINIMIZEDMETRICS minMet = new MINIMIZEDMETRICS();
-		minMet.cbSize = minMet.size();
-		minMet.iWidth = 30;
-		minMet.iHorzGap = 1;
-		minMet.iVertGap = 1;
-		minMet.iArrange = ARW.ARW_HIDE;
-		minMet.write();
+		if (noExplorer) {
+			oldMM = new MINIMIZEDMETRICS();
+			User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_GETMINIMIZEDMETRICS, oldMM.size(), oldMM.getPointer(), 0);
+			oldMM.read();
 
-		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETMINIMIZEDMETRICS, minMet.size(), minMet.getPointer(), 0);
+			MINIMIZEDMETRICS minMet = new MINIMIZEDMETRICS();
+			minMet.cbSize = minMet.size();
+			minMet.iWidth = 30;
+			minMet.iHorzGap = 1;
+			minMet.iVertGap = 1;
+			minMet.iArrange = ARW.ARW_HIDE;
+			minMet.write();
 
-		User32Ext.INSTANCE.SetTaskmanWindow(hwnd);
-		User32Ext.INSTANCE.RegisterShellHookWindow(hwnd);
-		User32Ext.INSTANCE.SetShellWindow(hwnd);
-		msgNotify = User32Ext.INSTANCE.RegisterWindowMessage("SHELLHOOK");
+			User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETMINIMIZEDMETRICS, minMet.size(), minMet.getPointer(), 0);
+			User32Ext.INSTANCE.SetTaskmanWindow(hwnd);
+			User32Ext.INSTANCE.RegisterShellHookWindow(hwnd);
+			User32Ext.INSTANCE.SetShellWindow(hwnd);
+			msgNotify = User32Ext.INSTANCE.RegisterWindowMessage("SHELLHOOK");
+		} else {
+			User32Ext.INSTANCE.RegisterShellHookWindow(hwnd);
+			msgNotify = 49195;
+		}
 		long dwp = User32Ext.INSTANCE.GetWindowLongPtr(hwnd, GWL_WNDPROC);
 
 		WindowProc proc = new WindowProc() {
@@ -143,7 +169,7 @@ public class TaskBar extends AbstractState {
 					String title = Native.toString(buffer);
 					int action = (int) wParam;
 					System.out.println(action + " - " + lParam + ": " + title);
-					switch ((int) wParam) {
+					switch (action) {
 					case HSHELL.HSHELL_WINDOWCREATED:
 						if (User32.INSTANCE.IsWindowVisible(hwndD))
 							if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
@@ -155,6 +181,12 @@ public class TaskBar extends AbstractState {
 										if (winpl.showCmd != SW_MAXIMIZE)
 											User32.INSTANCE.ShowWindow(hwndD, SW_RESTORE);
 										User32.INSTANCE.SetForegroundWindow(hwndD);
+									});
+									btn.setOnButtonRightPress(() -> {
+										GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+										contextWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
+										contextWindow.setHwnd(hwndD);
+										contextWindow.getWindow().setVisible(true);
 									});
 									tasks.addComponent(btn);
 									windows.put(hwndD, btn);
@@ -179,6 +211,11 @@ public class TaskBar extends AbstractState {
 						if (btnR != null)
 							btnR.setText(title);
 						break;
+					case HSHELL.HSHELL_GETMINRECT:
+						WindowButton btnM = windows.get(hwndD);
+						if (btnM != null) {
+						}
+						break;
 					}
 				}
 				switch (uMsg) {
@@ -193,7 +230,7 @@ public class TaskBar extends AbstractState {
 
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
-		accent.GradientColor = 0xC8000000;
+		accent.GradientColor = 0xBE282828;
 		accent.AccentFlags = 2;
 		int accentStructSize = accent.size();
 		accent.write();
@@ -209,6 +246,13 @@ public class TaskBar extends AbstractState {
 		HMONITOR monitor = User32.INSTANCE.MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
 		MONITORINFO info = new MONITORINFO();
 		User32.INSTANCE.GetMonitorInfo(monitor, info);
+		if (!noExplorer) {
+			taskbar = User32.INSTANCE.FindWindow("Shell_TrayWnd", null);
+
+			if (taskbar != null) {
+				User32.INSTANCE.ShowWindow(taskbar, SW_HIDE);
+			}
+		}
 
 		old = new RECT();
 		old.top = info.rcWork.top;
@@ -276,6 +320,12 @@ public class TaskBar extends AbstractState {
 									User32.INSTANCE.ShowWindow(hwndD, SW_RESTORE);
 								User32.INSTANCE.SetForegroundWindow(hwndD);
 							});
+							btn.setOnButtonRightPress(() -> {
+								GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+								contextWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
+								contextWindow.setHwnd(hwndD);
+								contextWindow.getWindow().setVisible(true);
+							});
 							tasks.addComponent(btn);
 							windows.put(hwndD, btn);
 						}
@@ -326,6 +376,59 @@ public class TaskBar extends AbstractState {
 		window.addComponent(tasks);
 		window.addComponent(rightBtns);
 
+		AppUI.getMainWindow().setVisible(true);
+
+		if (noExplorer) {
+			createBackground();
+			createHotKeys();
+			User32Ext.INSTANCE.SendNotifyMessage(WinUser.HWND_BROADCAST,
+					User32Ext.INSTANCE.RegisterWindowMessage("TaskbarCreated"), new WPARAM(), new LPARAM());
+		}
+
+		createContext();
+
+		System.gc();
+	}
+
+	private void createContext() {
+		Variables.X = -1000;
+		Variables.Y = -1000;
+		WindowHandle handle = WindowManager.generateHandle(200, 200, "");
+		handle.isDecorated(false);
+		handle.isVisible(false);
+		PixelBufferHandle pb = new PixelBufferHandle();
+		pb.setSrgbCapable(1);
+		pb.setSamples(4);
+		handle.setPixelBuffer(pb);
+		Window contxWindow = WindowManager.generate(handle);
+
+		Thread contxThr = new Thread(() -> {
+			contextWindow = new ContextWindow(contxWindow, handle);
+			contextWindow.init();
+			float delta = 0;
+			float accumulator = 0f;
+			float interval = 1f / 30;
+			float alpha = 0;
+			int fps = 30;
+			Window window = contextWindow.getWindow();
+			while (running) {
+				delta = window.getDelta();
+				accumulator += delta;
+				while (accumulator >= interval) {
+					contextWindow.update(interval);
+					accumulator -= interval;
+				}
+				alpha = accumulator / interval;
+				contextWindow.render(alpha);
+				window.updateDisplay(fps);
+			}
+			contextWindow.dispose();
+			window.dispose();
+		});
+		contxThr.start();
+	}
+
+	private void createBackground() {
 		Variables.X = 0;
 		Variables.Y = -1;
 		GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
@@ -361,29 +464,49 @@ public class TaskBar extends AbstractState {
 			backgroundWindow.dispose();
 			window.dispose();
 		});
-		backThr.setDaemon(true);
 		backThr.start();
-		AppUI.getMainWindow().setVisible(true);
-		User32Ext.INSTANCE.SendNotifyMessage(WinUser.HWND_BROADCAST,
-				User32Ext.INSTANCE.RegisterWindowMessage("TaskbarCreated"), new WPARAM(), new LPARAM());
-		
+	}
 
-		if (User32.INSTANCE.FindWindow("Shell_TrayWnd", null) != null) {
-			System.out.println("Taskbar!");
-		}
-
-		System.gc();
+	private void createHotKeys() {
+		Thread keys = new Thread(() -> {
+			keysThreadID = Kernel32.INSTANCE.GetCurrentThreadId();
+			User32.INSTANCE.RegisterHotKey(new HWND(Pointer.NULL), 1, MOD_WIN | MOD_NOREPEAT, VK_E);
+			MSG msg = new MSG();
+			while (User32.INSTANCE.GetMessage(msg, new HWND(Pointer.NULL), 0, 0) != 0 && running) {
+				if (msg.message == WM_HOTKEY) {
+					try {
+						switch (msg.wParam.intValue()) {
+						case 1:
+							new ProcessBuilder("explorer.exe", ",").start();
+							break;
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			User32.INSTANCE.UnregisterHotKey(Pointer.NULL, 1);
+		});
+		keys.start();
 	}
 
 	@Override
 	public void dispose() {
 		super.dispose();
-		backgroundWindow.getWindow().closeDisplay();
 		window.dispose(AppUI.getMainWindow());
 		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, old.getPointer(), 0);
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
 		HWND hwnd = new HWND(new Pointer(hwndGLFW));
 		User32Ext.INSTANCE.DeregisterShellHookWindow(hwnd);
+		if (noExplorer) {
+			backgroundWindow.getWindow().closeDisplay();
+			User32.INSTANCE.PostThreadMessage(keysThreadID, WM_QUIT, new WPARAM(), new LPARAM());
+			User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETMINIMIZEDMETRICS, oldMM.size(), oldMM.getPointer(), 0);
+		} else {
+			if (taskbar != null)
+				User32.INSTANCE.ShowWindow(taskbar, SW_SHOW);
+
+		}
 	}
 
 	@Override
@@ -392,6 +515,11 @@ public class TaskBar extends AbstractState {
 		KeyboardHandler kbh = AppUI.getMainWindow().getKeyboardHandler();
 		if (kbh.isShiftPressed() && kbh.isKeyPressed(GLFW.GLFW_KEY_ESCAPE)) {
 			running = false;
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			StateMachine.stop();
 		}
 	}

@@ -59,6 +59,7 @@ public class App {
 		int fps = 30;
 		Window window = AppUI.getMainWindow();
 		while (StateMachine.isRunning() && !(window.isCloseRequested())) {
+			TaskManager.update();
 			delta = window.getDelta();
 			accumulator += delta;
 			while (accumulator >= interval) {

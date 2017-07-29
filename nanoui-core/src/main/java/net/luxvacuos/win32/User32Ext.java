@@ -76,7 +76,7 @@ public interface User32Ext extends StdCallLibrary {
 	public interface WindowCompositionAttribute {
 		public static final int WCA_ACCENT_POLICY = 19;
 	}
-	
+
 	public interface NIM {
 		public static final int NIM_ADD = 0x00000000;
 		public static final int NIM_MODIFY = 0x00000001;
@@ -134,6 +134,7 @@ public interface User32Ext extends StdCallLibrary {
 	public static final int VK_MENU = 0x12;
 	public static final int VK_A = 0x41;
 	public static final int VK_D = 0x44;
+	public static final int VK_E = 0x45;
 	public static final int VK_S = 0x53;
 	public static final int VK_LWIN = 0x5B;
 

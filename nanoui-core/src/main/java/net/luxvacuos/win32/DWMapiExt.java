@@ -54,7 +54,7 @@ public interface DWMapiExt extends StdCallLibrary {
 	public class WINDOWPOS extends Structure implements Structure.ByReference {
 		public static final List<String> FIELDS = createFieldsOrder("hwnd", "hwndInsertAfter", "x", "y", "cx", "cy",
 				"flags");
-		
+
 		public WINDOWPOS(Pointer pointer) {
 			super(pointer);
 			read();
@@ -74,7 +74,7 @@ public interface DWMapiExt extends StdCallLibrary {
 		}
 
 	}
-	
+
 	public class NCCALCSIZE_PARAMS extends Structure implements Structure.ByReference {
 		public static final List<String> FIELDS = createFieldsOrder("rgrc", "lppos");
 

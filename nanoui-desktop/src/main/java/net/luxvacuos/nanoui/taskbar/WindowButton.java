@@ -47,5 +47,9 @@ public class WindowButton extends Button {
 	public HWND getHwnd() {
 		return hwnd;
 	}
+	
+	public float getX() {
+		return rootComponent.rootX + alignedX;
+	}
 
 }

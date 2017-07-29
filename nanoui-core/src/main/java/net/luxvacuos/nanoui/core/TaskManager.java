@@ -1,7 +1,7 @@
 /*
  * This file is part of NanoUI
  * 
- * Copyright (C) 2016-2017 Lux Vacuos
+ * Copyright (C) 2017 Guerra24
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,22 +17,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
-package net.luxvacuos.nanoui.rendering.api.glfw;
 
-import net.luxvacuos.nanoui.util.IDisposable;
+package net.luxvacuos.nanoui.core;
 
-public interface IWindow extends IDisposable {
+import java.util.LinkedList;
+import java.util.Queue;
 
-	public void beingNVGFrame();
+public class TaskManager {
 
-	public void endNVGFrame();
+	private static Queue<Runnable> tasks = new LinkedList<>();
 
-	public void updateDisplay(int fps);
+	public static void update() {
+		if (!tasks.isEmpty()) {
+			tasks.poll().run();
+		}
+	}
 
-	public void closeDisplay();
+	public static void addTask(Runnable task) {
+		tasks.add(task);
+	}
 
-	public void setVisible(boolean flag);
-	
-	public float getDelta();
+	public static boolean isEmpty() {
+		return tasks.isEmpty();
+	}
 
 }

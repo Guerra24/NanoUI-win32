@@ -20,17 +20,23 @@
 
 package net.luxvacuos.nanoui.taskbar;
 
+import static com.sun.jna.platform.win32.WinUser.GWL_EXSTYLE;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
+import static org.lwjgl.system.windows.User32.WS_EX_TOOLWINDOW;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL11;
 
+import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.WString;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.RECT;
+import com.sun.jna.platform.win32.WinUser.WNDENUMPROC;
 
 import net.luxvacuos.nanoui.bootstrap.Bootstrap;
 import net.luxvacuos.nanoui.core.App;
@@ -66,6 +72,7 @@ public class WindowPreview extends AbstractState {
 
 		window = new ComponentWindow(AppUI.getMainWindow());
 		window.setBackgroundColor(0, 0, 0, 0);
+		window.getTitlebar().setEnabled(false);
 
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
 		HWND hwnd = new HWND(new Pointer(hwndGLFW));
@@ -84,7 +91,24 @@ public class WindowPreview extends AbstractState {
 		data.Data = accentPtr;
 
 		User32Ext.INSTANCE.SetWindowCompositionAttribute(hwnd, data);
-/*		DWMapiExt.INSTANCE.DwmRegisterThumbnail(hwnd,window, thumbnail);
+		List<HWND> windows = new ArrayList<>();
+		User32Ext.INSTANCE.EnumWindows(new WNDENUMPROC() {
+			@Override
+			public boolean callback(HWND hwndD, Pointer arg1) {
+				if (User32.INSTANCE.IsWindowVisible(hwndD)) {
+					byte[] buffer = new byte[1024];
+					User32Ext.INSTANCE.GetWindowTextA(hwndD, buffer, buffer.length);
+					String title = Native.toString(buffer);
+					if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
+						if (!title.isEmpty()) {
+							windows.add(hwndD);
+						}
+				}
+				return true;
+			}
+		}, null);
+		
+		DWMapiExt.INSTANCE.DwmRegisterThumbnail(hwnd, windows.get(3), thumbnail);
 
 		PSIZE size = new PSIZE();
 		DWMapiExt.INSTANCE.DwmQueryThumbnailSourceSize(thumbnail, size);
@@ -105,7 +129,8 @@ public class WindowPreview extends AbstractState {
 		if (size.y < 200)
 			props.rcDestination.bottom = props.rcDestination.top + size.y;
 
-		DWMapiExt.INSTANCE.DwmUpdateThumbnailProperties(thumbnail, props);*/
+		DWMapiExt.INSTANCE.DwmUpdateThumbnailProperties(thumbnail, props);
+		AppUI.getMainWindow().setVisible(true);
 	}
 
 	@Override
@@ -137,8 +162,8 @@ public class WindowPreview extends AbstractState {
 		Variables.HEIGHT = 200;
 		Variables.X = 400;
 		Variables.Y = vidmode.height() - 240;
-		Variables.ALWAYS_ON_TOP = false;
-		Variables.DECORATED = true;
+		Variables.ALWAYS_ON_TOP = true;
+		Variables.DECORATED = false;
 		new App(new WindowPreview());
 	}
 

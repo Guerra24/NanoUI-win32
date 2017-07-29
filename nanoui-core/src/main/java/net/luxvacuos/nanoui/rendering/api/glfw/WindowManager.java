@@ -177,7 +177,6 @@ public final class WindowManager {
 		for (Window window : windows) {
 			if (!window.created)
 				continue;
-			window.dispose();
 			window.closeDisplay();
 		}
 	}

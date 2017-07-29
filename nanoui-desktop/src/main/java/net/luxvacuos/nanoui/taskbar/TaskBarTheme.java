@@ -83,7 +83,7 @@ public class TaskBarTheme extends NanoTheme {
 				nvgText(vg, x + w * 0.5f, y + h * 0.5f, preicon);
 			} else {
 				nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-				nvgText(vg, x + w * 0.5f - tw * 0.5f - iw * 0.75f, y + h * 0.5f, preicon);
+				nvgText(vg, x + h * 0.5f, y + h * 0.5f, preicon);
 			}
 		}
 

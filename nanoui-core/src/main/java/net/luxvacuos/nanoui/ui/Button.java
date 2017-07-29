@@ -28,9 +28,9 @@ public class Button extends Component {
 
 	protected String text = "missigno", font = "Segoe UI", entypo = "Segoe MDL2";
 	protected String preicon;
-	protected OnAction onPress;
+	protected OnAction onPress, rightPress;
 	protected float fontSize = 18, preiconSize = 16;
-	protected boolean pressed = false, enabled = true, inside;
+	protected boolean pressed = false, pressedRight =false, enabled = true, inside;
 
 	public Button(float x, float y, float w, float h, String text) {
 		this.x = x;
@@ -60,6 +60,12 @@ public class Button extends Component {
 					onPress.onAction();
 				pressed = pressed();
 			}
+		if (rightPress != null)
+			if (pressedRight() || pressedRight) {
+				if (!pressedRight() && pressedRight)
+					rightPress.onAction();
+				pressedRight = pressedRight();
+			}
 
 		super.update(delta, window);
 	}
@@ -77,12 +83,23 @@ public class Button extends Component {
 			return false;
 	}
 
+	public boolean pressedRight() {
+		if (insideButton())
+			return Mouse.isButtonDown(1);
+		else
+			return false;
+	}
+
 	public void setText(String text) {
 		this.text = text;
 	}
 
 	public void setOnButtonPress(OnAction onPress) {
 		this.onPress = onPress;
+	}
+
+	public void setOnButtonRightPress(OnAction rightPress) {
+		this.rightPress = rightPress;
 	}
 
 	public void setEntypo(String entypo) {

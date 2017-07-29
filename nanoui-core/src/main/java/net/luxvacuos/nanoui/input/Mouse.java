@@ -132,10 +132,6 @@ public class Mouse {
 		}
 		x = latestX;
 		y = latestY;
-		if(!isMouseInsideWindow) {
-			x = -1000;
-			y = -1000;
-		}
 	}
 
 	public static void setGrabbed(boolean grab) {

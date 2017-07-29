@@ -21,7 +21,7 @@
 package net.luxvacuos.nanoui.rendering.api.glfw;
 
 import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
-import static org.lwjgl.glfw.GLFW.glfwHideWindow;
+import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.glfwSetCursorEnterCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
@@ -214,6 +214,10 @@ public abstract class AbstractWindow implements IWindow {
 			glfwShowWindow(this.windowID);
 		else
 			glfwHideWindow(this.windowID);
+	}
+	
+	public void setPosition(int x, int y) {
+		glfwSetWindowPos(windowID, x, y);
 	}
 
 	public void resetViewport() {
