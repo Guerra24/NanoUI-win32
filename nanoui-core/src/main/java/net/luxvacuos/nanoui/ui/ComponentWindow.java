@@ -119,7 +119,7 @@ public class ComponentWindow {
 	}
 
 	public void dispose(Window window) {
-		rootComponent.dispose();
+		rootComponent.dispose(window);
 	}
 
 	public void addComponent(Component component) {

@@ -22,7 +22,6 @@ package net.luxvacuos.nanoui.ui;
 
 import static org.lwjgl.nanovg.NanoVG.nvgDeleteImage;
 
-import net.luxvacuos.nanoui.core.AppUI;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 
@@ -50,15 +49,16 @@ public class Image extends Component {
 
 	@Override
 	public void render(Window window) {
-		Theme.renderImage(window.getNVGID(), rootComponent.rootX + alignedX,
-				window.getHeight() - rootComponent.rootY - alignedY - h, w, h, image, 1);
+		if (image != -1)
+			Theme.renderImage(window.getNVGID(), rootComponent.rootX + alignedX,
+					window.getHeight() - rootComponent.rootY - alignedY - h, w, h, image, 1);
 	}
 
 	@Override
-	public void dispose() {
-		super.dispose();
+	public void dispose(Window window) {
+		super.dispose(window);
 		if (deleteOnClose)
-			nvgDeleteImage(AppUI.getMainWindow().getNVGID(), image);
+			nvgDeleteImage(window.getNVGID(), image);
 	}
 
 }

@@ -54,9 +54,9 @@ public class Container extends Component {
 	}
 
 	@Override
-	public void dispose() {
-		comp.dispose();
-		super.dispose();
+	public void dispose(Window window) {
+		comp.dispose(window);
+		super.dispose(window);
 	}
 
 	public void setLayout(ILayout layout) {
@@ -67,8 +67,8 @@ public class Container extends Component {
 		comp.addComponent(component);
 	}
 	
-	public void removeComponent(Component component){
-		comp.removeComponent(component);
+	public void removeComponent(Component component, Window window){
+		comp.removeComponent(component, window);
 	}
 	
 	public List<Component> getComponents(){

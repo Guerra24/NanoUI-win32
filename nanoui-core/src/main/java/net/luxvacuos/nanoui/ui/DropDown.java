@@ -22,10 +22,8 @@ package net.luxvacuos.nanoui.ui;
 
 import java.util.List;
 
-import net.luxvacuos.nanoui.input.Mouse;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
-import net.luxvacuos.nanoui.util.Maths;
 
 public class DropDown<E> extends Button {
 

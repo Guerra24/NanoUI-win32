@@ -44,6 +44,7 @@ public class Text extends Component {
 	public void render(Window window) {
 		w = Theme.renderText(window.getNVGID(), text, font, align, rootComponent.rootX + alignedX,
 				window.getHeight() - rootComponent.rootY - alignedY, fontSize, color) - rootComponent.rootX - alignedX;
+		h = fontSize;
 	}
 
 	public void setAlign(int align) {

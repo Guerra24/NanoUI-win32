@@ -23,7 +23,7 @@ package net.luxvacuos.nanoui.ui;
 import org.lwjgl.nanovg.NVGColor;
 
 import net.luxvacuos.nanoui.core.Variables;
-import net.luxvacuos.nanoui.input.Mouse;
+import net.luxvacuos.nanoui.input.MouseHandler;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 
@@ -60,13 +60,14 @@ public class TitleBar implements ITitleBar {
 	@Override
 	public void update(float delta, Window window) {
 		if (enabled) {
+			MouseHandler mh = window.getMouseHandler();
 
-			if ((Mouse.isButtonDown(0) && isInside(window)) || dragging) {
-				dragging = Mouse.isButtonDown(0);
+			if ((mh.isButtonPressed(0) && isInside(window, mh)) || dragging) {
+				dragging = mh.isButtonPressed(0);
 				if (drag != null)
 					drag.event(window);
 			}
-			if (Mouse.isButtonDown(0) && isInside(window) || pressed) {
+			if (mh.isButtonPressed(0) && isInside(window, mh) || pressed) {
 				if (!pressed) {
 					count = true;
 					if (time != 0) {
@@ -75,7 +76,7 @@ public class TitleBar implements ITitleBar {
 						count = false;
 					}
 				}
-				pressed = Mouse.isButtonDown(0);
+				pressed = mh.isButtonPressed(0);
 			}
 			if (count) {
 				time += 1 * delta;
@@ -101,10 +102,10 @@ public class TitleBar implements ITitleBar {
 	}
 
 	@Override
-	public boolean isInside(Window window) {
-		return Mouse.getX() >= left.getFinalW() && Mouse.getY() < window.getHeight()
-				&& Mouse.getX() < window.getWidth() + right.getFinalW()
-				&& Mouse.getY() > window.getHeight() - Variables.TITLEBAR_HEIGHT;
+	public boolean isInside(Window window, MouseHandler mh) {
+		return mh.getX() >= left.getFinalW() && mh.getY() < window.getHeight()
+				&& mh.getX() < window.getWidth() + right.getFinalW()
+				&& mh.getY() > window.getHeight() - Variables.TITLEBAR_HEIGHT;
 	}
 
 	@Override
@@ -134,8 +135,10 @@ public class TitleBar implements ITitleBar {
 	}
 
 	@Override
-	public void dispose() {
-		left.dispose();
+	public void dispose(Window window) {
+		left.dispose(window);
+		center.dispose(window);
+		right.dispose(window);
 	}
 
 	@Override

@@ -42,7 +42,6 @@ import com.badlogic.gdx.utils.Array;
 import net.luxvacuos.nanoui.core.Variables;
 import net.luxvacuos.nanoui.core.exception.DecodeTextureException;
 import net.luxvacuos.nanoui.core.exception.GLFWException;
-import net.luxvacuos.nanoui.input.Mouse;
 import net.luxvacuos.nanoui.resources.ResourceLoader;
 
 public final class WindowManager {
@@ -183,7 +182,6 @@ public final class WindowManager {
 
 	public static void update() {
 		glfwPollEvents();
-		Mouse.poll();
 	}
 
 	public static double getTime() {

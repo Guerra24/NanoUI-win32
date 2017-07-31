@@ -18,20 +18,38 @@
  * 
  */
 
-package net.luxvacuos.nanoui.ui;
+package net.luxvacuos.nanoui.input.callbacks;
 
-import net.luxvacuos.nanoui.rendering.api.glfw.Window;
+import org.lwjgl.glfw.GLFWScrollCallback;
 
-public interface IComponent {
-	
-	public void init();
-	
-	public void render(Window window);
-	
-	public void update(float delta, Window window);
-	
-	public void alwaysUpdate(float delta, Window window);
-	
-	public void dispose(Window window);
+public class MouseScrollCallback extends GLFWScrollCallback {
+
+	private double x, y;
+
+	private final long windowID;
+
+	public MouseScrollCallback(long windowID) {
+		this.windowID = windowID;
+	}
+
+	@Override
+	public void invoke(long windowID, double x, double y) {
+		if (this.windowID != windowID)
+			return;
+		this.x = x;
+		this.y = y;
+	}
+
+	public double getYWheel() {
+		double yWheel = y;
+		y = 0;
+		return yWheel;
+	}
+
+	public double getXWheel() {
+		double xWheel = x;
+		x = 0;
+		return xWheel;
+	}
 
 }

@@ -20,7 +20,7 @@
 
 package net.luxvacuos.nanoui.taskbar;
 
-import static com.sun.jna.platform.win32.WinUser.GWL_EXSTYLE;
+import static com.sun.jna.platform.win32.WinUser.*;
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
 import static org.lwjgl.nanovg.NanoVG.nvgDeleteImage;
@@ -70,7 +70,7 @@ public class Background extends AbstractState {
 		WindowManager.createWindow(handle, window, true);
 
 		long hwndGLFW = glfwGetWin32Window(window.getID());
-		HWND hwnd = new HWND(new Pointer(hwndGLFW));
+		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
 
 		WindowProc proc = new WindowProc() {
 
@@ -86,10 +86,11 @@ public class Background extends AbstractState {
 				return org.lwjgl.system.windows.User32.DefWindowProc(hw, uMsg, wParam, lParam);
 			}
 		};
-		User32.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, new Pointer(proc.address()));
+		User32.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, Pointer.createConstant(proc.address()));
 		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
+		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_STYLE, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 
-		User32.INSTANCE.SetWindowPos(hwnd, new HWND(new Pointer(HWND_BOTTOM)), 0, 0, 0, 0,
+		User32.INSTANCE.SetWindowPos(hwnd, new HWND(Pointer.createConstant(HWND_BOTTOM)), 0, 0, 0, 0,
 				SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 		wallpaper = window.getResourceLoader().loadNVGTexture(getCurrentDesktopWallpaper(), true);
 		TaskManager.addTask(() -> window.setVisible(true));
@@ -112,7 +113,7 @@ public class Background extends AbstractState {
 		window.beingNVGFrame();
 		Theme.renderBox(window.getNVGID(), 0, 0, window.getWidth(), window.getHeight(),
 				Theme.setColor(1, 1, 1, 1, Theme.colorA), 0, 0, 0, 0);
-		Theme.renderImage(window.getNVGID(), 0, 1, window.getWidth(), window.getHeight() - 1, wallpaper, 1);
+		Theme.renderImage(window.getNVGID(), 0, 0, window.getWidth(), window.getHeight(), wallpaper, 1);
 		window.endNVGFrame();
 	}
 

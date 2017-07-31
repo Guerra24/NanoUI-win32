@@ -53,7 +53,6 @@ public class TaskBarTheme extends NanoTheme {
 	@Override
 	public void renderButton(long vg, String preicon, String text, String font, String entypo, float x, float y,
 			float w, float h, boolean highlight, float fontSize, float preiconSize) {
-		float tw, iw = 0;
 		nvgSave(vg);
 
 		nvgBeginPath(vg);
@@ -66,12 +65,9 @@ public class TaskBarTheme extends NanoTheme {
 
 		nvgFontSize(vg, fontSize);
 		nvgFontFace(vg, font);
-		tw = nvgTextBounds(vg, 0, 0, text, (FloatBuffer) null);
 		if (preicon != null) {
 			nvgFontSize(vg, preiconSize);
 			nvgFontFace(vg, entypo);
-			iw = nvgTextBounds(vg, 0, 0, preicon, (FloatBuffer) null);
-			iw += h * 0.15f;
 		}
 
 		if (preicon != null) {
@@ -93,7 +89,7 @@ public class TaskBarTheme extends NanoTheme {
 		nvgFontFace(vg, font);
 		nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 		nvgFillColor(vg, buttonTextColor);
-		nvgText(vg, x + w * 0.5f - tw * 0.5f + iw * 0.25f, y + h * 0.5f, text);
+		nvgText(vg, x + h * 0.5f + 24, y + h * 0.5f, text);
 		nvgRestore(vg);
 		nvgRestore(vg);
 	}
@@ -148,7 +144,7 @@ public class TaskBarTheme extends NanoTheme {
 		nvgFontFace(vg, font);
 		nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 		nvgFillColor(vg, buttonTextColor);
-		nvgText(vg, x + w * 0.5f - tw * 0.5f + iw * 0.25f, y + h * 0.5f, text);
+		nvgText(vg, x + h * 0.5f + 25, y + h * 0.5f, text);
 		nvgRestore(vg);
 		nvgRestore(vg);
 	}

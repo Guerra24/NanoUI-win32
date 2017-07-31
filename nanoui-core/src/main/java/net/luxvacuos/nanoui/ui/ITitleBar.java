@@ -20,16 +20,18 @@
 
 package net.luxvacuos.nanoui.ui;
 
+import net.luxvacuos.nanoui.input.MouseHandler;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
-import net.luxvacuos.nanoui.util.IDisposable;
 
-public interface ITitleBar extends IDisposable {
+public interface ITitleBar {
 
 	public void render(Window window);
 
 	public void update(float delta, Window window);
 
 	public void alwaysUpdate(float delta, Window window);
+
+	public void dispose(Window window);
 
 	public RootComponent getLeft();
 
@@ -42,9 +44,9 @@ public interface ITitleBar extends IDisposable {
 	public boolean isEnabled();
 
 	public boolean isDragging();
-	
-	public boolean isInside(Window window);
-	
+
+	public boolean isInside(Window window, MouseHandler mh);
+
 	public boolean isInside(Window window, int x, int y);
 
 	public void setEnabled(boolean enabled);

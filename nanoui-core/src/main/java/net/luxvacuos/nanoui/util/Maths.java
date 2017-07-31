@@ -20,12 +20,6 @@
 
 package net.luxvacuos.nanoui.util;
 
-/**
- * Maths
- * 
- * @author Guerra24 <pablo230699@hotmail.com>
- * @category Util
- */
 public class Maths {
 
 	public static float clamp(double d, double min, double max) {

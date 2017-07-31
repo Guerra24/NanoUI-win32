@@ -23,7 +23,6 @@ package net.luxvacuos.nanoui.core;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
-import net.luxvacuos.nanoui.input.Mouse;
 import net.luxvacuos.nanoui.rendering.api.glfw.PixelBufferHandle;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.glfw.WindowHandle;
@@ -50,7 +49,6 @@ public class AppUI {
 		handle.setPixelBuffer(pb);
 		window = WindowManager.generate(handle);
 		WindowManager.createWindow(handle, window, true);
-		Mouse.setWindow(window);
 		Theme.setTheme(new NanoTheme());
 
 		ResourceLoader loader = window.getResourceLoader();

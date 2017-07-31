@@ -27,11 +27,15 @@ import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
 import static org.lwjgl.system.windows.User32.WM_KILLFOCUS;
 import static org.lwjgl.system.windows.User32.WS_EX_TOOLWINDOW;
 
+import java.io.IOException;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.JNI;
 import org.lwjgl.system.windows.WindowProc;
 
+import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import com.sun.jna.platform.WindowUtils;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
@@ -45,11 +49,14 @@ import net.luxvacuos.nanoui.rendering.api.glfw.WindowHandle;
 import net.luxvacuos.nanoui.rendering.api.glfw.WindowManager;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 import net.luxvacuos.nanoui.resources.ResourceLoader;
+import net.luxvacuos.nanoui.ui.Alignment;
 import net.luxvacuos.nanoui.ui.Button;
 import net.luxvacuos.nanoui.ui.ComponentWindow;
+import net.luxvacuos.nanoui.ui.Container;
 import net.luxvacuos.nanoui.ui.Direction;
 import net.luxvacuos.nanoui.ui.FlowLayout;
 import net.luxvacuos.nanoui.ui.Font;
+import net.luxvacuos.nanoui.ui.Image;
 import net.luxvacuos.win32.User32Ext;
 import net.luxvacuos.win32.User32Ext.Accent;
 import net.luxvacuos.win32.User32Ext.AccentPolicy;
@@ -61,7 +68,9 @@ public class ContextWindow extends AbstractState {
 	private WindowHandle handle;
 	private ComponentWindow compWin;
 	private Font segoeui, segoemdl2;
-	private HWND hwnd;
+	private HWND hwndWin;
+	private HWND local;
+	private boolean run;
 
 	protected ContextWindow(Window backWindow, WindowHandle handle) {
 		super("_main");
@@ -85,7 +94,7 @@ public class ContextWindow extends AbstractState {
 		compWin.getTitlebar().setEnabled(false);
 
 		long hwndGLFW = glfwGetWin32Window(window.getID());
-		HWND hwnd = new HWND(new Pointer(hwndGLFW));
+		local = new HWND(Pointer.createConstant(hwndGLFW));
 
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
@@ -100,8 +109,8 @@ public class ContextWindow extends AbstractState {
 		data.SizeOfData = accentStructSize;
 		data.Data = accentPtr;
 
-		User32Ext.INSTANCE.SetWindowCompositionAttribute(hwnd, data);
-		long dwp = User32Ext.INSTANCE.GetWindowLongPtr(hwnd, GWL_WNDPROC);
+		User32Ext.INSTANCE.SetWindowCompositionAttribute(local, data);
+		long dwp = User32Ext.INSTANCE.GetWindowLongPtr(local, GWL_WNDPROC);
 		WindowProc proc = new WindowProc() {
 
 			@Override
@@ -115,16 +124,9 @@ public class ContextWindow extends AbstractState {
 				return JNI.callPPPP(dwp, hw, uMsg, wParam, lParam);
 			}
 		};
-		User32.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, new Pointer(proc.address()));
-		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
+		User32.INSTANCE.SetWindowLongPtr(local, GWL_WNDPROC, Pointer.createConstant(proc.address()));
+		User32Ext.INSTANCE.SetWindowLongPtr(local, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
 
-		Button btnClose = new Button(0, 0, 200, 30, "Close");
-		btnClose.setPreicon(Theme.ICON_CHROME_CLOSE);
-		btnClose.setPreiconSize(12);
-		btnClose.setOnButtonPress(() -> {
-			User32.INSTANCE.PostMessage(this.hwnd, WM_CLOSE, new WPARAM(), new LPARAM());
-		});
-		compWin.addComponent(btnClose);
 	}
 
 	@Override
@@ -138,6 +140,50 @@ public class ContextWindow extends AbstractState {
 	@Override
 	public void update(float delta) {
 		compWin.update(delta, window);
+		if (run) {
+			compWin.dispose(window);
+			Container bottomBtns = new Container(0, 0, 200, 60);
+
+			char[] name = new char[1024];
+			User32Ext.INSTANCE.GetWindowTextW(hwndWin, name, name.length);
+			String title = Native.toString(name);
+
+			Button btnClose = new Button(0, 0, 200, 30, "Close");
+			btnClose.setPreicon(Theme.ICON_CHROME_CLOSE);
+			btnClose.setPreiconSize(12);
+			btnClose.setOnButtonPress(() -> {
+				User32.INSTANCE.PostMessage(this.hwndWin, WM_CLOSE, new WPARAM(), new LPARAM());
+				TaskManager.addTask(() -> window.setVisible(false));
+			});
+			Button btnOpen = new Button(0, 30, 200, 30, title);
+			btnOpen.setOnButtonPress(() -> {
+				try {
+					new ProcessBuilder(WindowUtils.getProcessFilePath(hwndWin), "").start();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				TaskManager.addTask(() -> window.setVisible(false));
+			});
+			bottomBtns.addComponent(btnClose);
+			bottomBtns.addComponent(btnOpen);
+
+			Image icon = new Image(13, 38, 16, 16, Util.getIcon(hwndWin, window), true);
+			bottomBtns.addComponent(icon);
+			compWin.addComponent(bottomBtns);
+
+			Container tasks = new Container(-20, 0, 220, 140);
+			tasks.setLayout(new FlowLayout(Direction.DOWN, 0, 10));
+			for (int i = 0; i < 4; i++) {
+				Button t = new Button(0, 0, 220, 30, "Task " + i);
+				t.setWindowAlignment(Alignment.LEFT_TOP);
+				t.setAlignment(Alignment.RIGHT_BOTTOM);
+				tasks.addComponent(t);
+			}
+			compWin.addComponent(tasks);
+			TaskManager.addTask(() -> window.setVisible(true));
+			run = false;
+		}
+
 	}
 
 	@Override
@@ -150,8 +196,9 @@ public class ContextWindow extends AbstractState {
 	public Window getWindow() {
 		return window;
 	}
-	
-	public void setHwnd(HWND hwnd) {
-		this.hwnd = hwnd;
+
+	public void setHwnd(HWND hwndWin) {
+		this.hwndWin = hwndWin;
+		run = true;
 	}
 }

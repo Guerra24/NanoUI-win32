@@ -61,9 +61,9 @@ public class RootComponent {
 		}
 	}
 
-	public void dispose() {
+	public void dispose(Window window) {
 		for (Component component : components) {
-			component.dispose();
+			component.dispose(window);
 		}
 		components.clear();
 	}
@@ -82,8 +82,8 @@ public class RootComponent {
 		}
 	}
 
-	public void removeComponent(Component component) {
-		component.dispose();
+	public void removeComponent(Component component, Window window) {
+		component.dispose(window);
 		components.remove(component);
 	}
 

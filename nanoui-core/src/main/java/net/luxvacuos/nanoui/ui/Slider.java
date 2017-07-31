@@ -20,7 +20,7 @@
 
 package net.luxvacuos.nanoui.ui;
 
-import net.luxvacuos.nanoui.input.Mouse;
+import net.luxvacuos.nanoui.input.MouseHandler;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 import net.luxvacuos.nanoui.util.Maths;
@@ -41,9 +41,10 @@ public class Slider extends Component {
 
 	@Override
 	public void update(float delta, Window window) {
-		if ((Mouse.isButtonDown(0) && insideSlider()) || move) {
-			move = Mouse.isButtonDown(0);
-			pos = (Mouse.getX() - rootComponent.rootX - alignedX) / w;
+		MouseHandler mh = window.getMouseHandler();
+		if ((mh.isButtonPressed(0) && insideSlider(mh)) || move) {
+			move = mh.isButtonPressed(0);
+			pos = (mh.getX() - rootComponent.rootX - alignedX) / w;
 			if (customPrecision)
 				pos = (float) (Math.floor(pos * precision) / precision);
 			pos = Maths.clamp(pos, 0, 1);
@@ -59,10 +60,10 @@ public class Slider extends Component {
 				window.getHeight() - rootComponent.rootY - alignedY - h, w, h);
 	}
 
-	public boolean insideSlider() {
-		return Mouse.getX() > rootComponent.rootX + alignedX - 6 && Mouse.getY() > rootComponent.rootY + alignedY
-				&& Mouse.getX() < rootComponent.rootX + alignedX + w + 6
-				&& Mouse.getY() < rootComponent.rootY + alignedY + h;
+	public boolean insideSlider(MouseHandler mh) {
+		return mh.getX() > rootComponent.rootX + alignedX - 6 && mh.getY() > rootComponent.rootY + alignedY
+				&& mh.getX() < rootComponent.rootX + alignedX + w + 6
+				&& mh.getY() < rootComponent.rootY + alignedY + h;
 	}
 
 	public void setOnPress(OnAction onPress) {

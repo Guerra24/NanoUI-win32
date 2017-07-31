@@ -18,20 +18,46 @@
  * 
  */
 
-package net.luxvacuos.nanoui.ui;
+package net.luxvacuos.nanoui.input.callbacks;
 
-import net.luxvacuos.nanoui.rendering.api.glfw.Window;
+import org.lwjgl.glfw.GLFWCursorPosCallback;
 
-public interface IComponent {
-	
-	public void init();
-	
-	public void render(Window window);
-	
-	public void update(float delta, Window window);
-	
-	public void alwaysUpdate(float delta, Window window);
-	
-	public void dispose(Window window);
+public class MousePosCallback extends GLFWCursorPosCallback {
+
+	private double lastX, lastY, x, y, dx, dy;
+
+	private final long windowID;
+
+	public MousePosCallback(long windowID) {
+		this.windowID = windowID;
+	}
+
+	@Override
+	public void invoke(long window, double xpos, double ypos) {
+		if (this.windowID != window)
+			return;
+		this.lastX = this.x;
+		this.lastY = this.y;
+		this.x = xpos;
+		this.y = ypos;
+		this.dx = this.x - this.lastX;
+		this.dy = this.y - this.lastY;
+	}
+
+	public double getX() {
+		return x;
+	}
+
+	public double getY() {
+		return y;
+	}
+
+	public double getDX() {
+		return dx;
+	}
+
+	public double getDY() {
+		return dy;
+	}
 
 }

@@ -28,6 +28,7 @@ import static com.sun.jna.platform.win32.WinUser.MONITOR_DEFAULTTOPRIMARY;
 import static com.sun.jna.platform.win32.WinUser.SW_HIDE;
 import static com.sun.jna.platform.win32.WinUser.SW_MAXIMIZE;
 import static com.sun.jna.platform.win32.WinUser.SW_RESTORE;
+import static com.sun.jna.platform.win32.WinUser.SW_MINIMIZE;
 import static com.sun.jna.platform.win32.WinUser.SW_SHOW;
 import static com.sun.jna.platform.win32.WinUser.WM_HOTKEY;
 import static com.sun.jna.platform.win32.WinUser.WM_QUIT;
@@ -88,6 +89,7 @@ import net.luxvacuos.win32.User32Ext.Accent;
 import net.luxvacuos.win32.User32Ext.AccentPolicy;
 import net.luxvacuos.win32.User32Ext.HSHELL;
 import net.luxvacuos.win32.User32Ext.MINIMIZEDMETRICS;
+import net.luxvacuos.win32.User32Ext.SHELLHOOKINFO;
 import net.luxvacuos.win32.User32Ext.SPI;
 import net.luxvacuos.win32.User32Ext.WindowCompositionAttribute;
 import net.luxvacuos.win32.User32Ext.WindowCompositionAttributeData;
@@ -133,7 +135,7 @@ public class TaskBar extends AbstractState {
 		window.setLayout(new FlowLayout(Direction.RIGHT, 0, 0));
 
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
-		HWND hwnd = new HWND(new Pointer(hwndGLFW));
+		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
 
 		if (noExplorer) {
 			oldMM = new MINIMIZEDMETRICS();
@@ -163,9 +165,9 @@ public class TaskBar extends AbstractState {
 			@Override
 			public long invoke(long hwnd, int uMsg, long wParam, long lParam) {
 				if (uMsg == msgNotify) {
-					HWND hwndD = new HWND(new Pointer(lParam));
-					byte[] buffer = new byte[1024];
-					User32Ext.INSTANCE.GetWindowTextA(hwndD, buffer, buffer.length);
+					HWND hwndD = new HWND(Pointer.createConstant(lParam));
+					char[] buffer = new char[1024];
+					User32Ext.INSTANCE.GetWindowTextW(hwndD, buffer, buffer.length);
 					String title = Native.toString(buffer);
 					int action = (int) wParam;
 					System.out.println(action + " - " + lParam + ": " + title);
@@ -176,27 +178,32 @@ public class TaskBar extends AbstractState {
 								if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
 									WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
 									btn.setOnButtonPress(() -> {
-										WINDOWPLACEMENT winpl = new WINDOWPLACEMENT();
-										User32Ext.INSTANCE.GetWindowPlacement(hwndD, winpl);
-										if (winpl.showCmd != SW_MAXIMIZE)
-											User32.INSTANCE.ShowWindow(hwndD, SW_RESTORE);
-										User32.INSTANCE.SetForegroundWindow(hwndD);
+										if (btn.active) {
+											User32.INSTANCE.SetForegroundWindow(hwndD);
+											User32Ext.INSTANCE.ShowWindowAsync(hwndD, SW_MINIMIZE);
+										} else {
+											WINDOWPLACEMENT winpl = new WINDOWPLACEMENT();
+											User32Ext.INSTANCE.GetWindowPlacement(hwndD, winpl);
+											if (winpl.showCmd != SW_MAXIMIZE)
+												User32Ext.INSTANCE.ShowWindowAsync(hwndD, SW_RESTORE);
+											User32.INSTANCE.SetForegroundWindow(hwndD);
+										}
 									});
 									btn.setOnButtonRightPress(() -> {
 										GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
 										contextWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
 										contextWindow.setHwnd(hwndD);
-										contextWindow.getWindow().setVisible(true);
 									});
+									btn.reDraw(hwndD, AppUI.getMainWindow());
 									tasks.addComponent(btn);
 									windows.put(hwndD, btn);
 								}
-						break;
+						return 1;
 					case HSHELL.HSHELL_WINDOWDESTROYED:
 						WindowButton btnD = windows.get(hwndD);
 						if (btnD != null)
-							tasks.removeComponent(windows.remove(hwndD));
-						break;
+							tasks.removeComponent(windows.remove(hwndD), AppUI.getMainWindow());
+						return 1;
 					case HSHELL.HSHELL_WINDOWACTIVATED:
 						for (Component comp : tasks.getComponents()) {
 							WindowButton wb = (WindowButton) comp;
@@ -205,17 +212,26 @@ public class TaskBar extends AbstractState {
 						WindowButton btnA = windows.get(hwndD);
 						if (btnA != null)
 							btnA.active = true;
-						break;
+						return 1;
 					case HSHELL.HSHELL_REDRAW:
 						WindowButton btnR = windows.get(hwndD);
-						if (btnR != null)
+						if (btnR != null) {
 							btnR.setText(title);
-						break;
-					case HSHELL.HSHELL_GETMINRECT:
-						WindowButton btnM = windows.get(hwndD);
-						if (btnM != null) {
+							btnR.reDraw(hwndD, AppUI.getMainWindow());
 						}
-						break;
+						return 1;
+					case HSHELL.HSHELL_GETMINRECT:
+						GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+						SHELLHOOKINFO info = new SHELLHOOKINFO(new Pointer(lParam));
+						WindowButton btnM = windows.get(info.hWnd);
+						if (btnM != null) {
+							info.rc.left = (short) (btnM.getX() + 80);
+							info.rc.top = (short) (vidmode.height() - 40);
+							info.rc.right = (short) (btnM.getX() + 120);
+							info.rc.bottom = (short) (vidmode.height());
+							info.write();
+						}
+						return 1;
 					}
 				}
 				switch (uMsg) {
@@ -307,25 +323,30 @@ public class TaskBar extends AbstractState {
 			@Override
 			public boolean callback(HWND hwndD, Pointer arg1) {
 				if (User32.INSTANCE.IsWindowVisible(hwndD)) {
-					byte[] buffer = new byte[1024];
-					User32Ext.INSTANCE.GetWindowTextA(hwndD, buffer, buffer.length);
+					char[] buffer = new char[1024];
+					User32Ext.INSTANCE.GetWindowTextW(hwndD, buffer, buffer.length);
 					String title = Native.toString(buffer);
 					if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
 						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
 							WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
 							btn.setOnButtonPress(() -> {
-								WINDOWPLACEMENT winpl = new WINDOWPLACEMENT();
-								User32Ext.INSTANCE.GetWindowPlacement(hwndD, winpl);
-								if (winpl.showCmd != SW_MAXIMIZE)
-									User32.INSTANCE.ShowWindow(hwndD, SW_RESTORE);
-								User32.INSTANCE.SetForegroundWindow(hwndD);
+								if (btn.active) {
+									User32.INSTANCE.SetForegroundWindow(hwndD);
+									User32Ext.INSTANCE.ShowWindowAsync(hwndD, SW_MINIMIZE);
+								} else {
+									WINDOWPLACEMENT winpl = new WINDOWPLACEMENT();
+									User32Ext.INSTANCE.GetWindowPlacement(hwndD, winpl);
+									if (winpl.showCmd != SW_MAXIMIZE)
+										User32Ext.INSTANCE.ShowWindowAsync(hwndD, SW_RESTORE);
+									User32.INSTANCE.SetForegroundWindow(hwndD);
+								}
 							});
 							btn.setOnButtonRightPress(() -> {
 								GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
 								contextWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
 								contextWindow.setHwnd(hwndD);
-								contextWindow.getWindow().setVisible(true);
 							});
+							btn.reDraw(hwndD, AppUI.getMainWindow());
 							tasks.addComponent(btn);
 							windows.put(hwndD, btn);
 						}
@@ -430,7 +451,7 @@ public class TaskBar extends AbstractState {
 
 	private void createBackground() {
 		Variables.X = 0;
-		Variables.Y = -1;
+		Variables.Y = 0;
 		GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
 		WindowHandle handle = WindowManager.generateHandle(vidmode.width(), vidmode.height(), "");
 		handle.isDecorated(false);
@@ -496,7 +517,7 @@ public class TaskBar extends AbstractState {
 		window.dispose(AppUI.getMainWindow());
 		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, old.getPointer(), 0);
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
-		HWND hwnd = new HWND(new Pointer(hwndGLFW));
+		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
 		User32Ext.INSTANCE.DeregisterShellHookWindow(hwnd);
 		if (noExplorer) {
 			backgroundWindow.getWindow().closeDisplay();

@@ -20,7 +20,7 @@
 
 package net.luxvacuos.nanoui.ui;
 
-import net.luxvacuos.nanoui.input.Mouse;
+import net.luxvacuos.nanoui.input.MouseHandler;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 
@@ -46,8 +46,9 @@ public class EditBox extends Component {
 
 	@Override
 	public void update(float delta, Window window) {
-		if (Mouse.isButtonDown(0)) {
-			if (insideBox()) {
+		MouseHandler mh = window.getMouseHandler();
+		if (mh.isButtonPressed(0)) {
+			if (insideBox(mh)) {
 				window.getKeyboardHandler().enableTextInput();
 				window.getKeyboardHandler().clearInputData();
 				selected = true;
@@ -62,10 +63,10 @@ public class EditBox extends Component {
 		super.update(delta, window);
 	}
 
-	public boolean insideBox() {
-		return Mouse.getX() > rootComponent.rootX + alignedX && Mouse.getY() > rootComponent.rootY + alignedY
-				&& Mouse.getX() < rootComponent.rootX + alignedX + w
-				&& Mouse.getY() < rootComponent.rootY + alignedY + h;
+	public boolean insideBox(MouseHandler mh) {
+		return mh.getX() > rootComponent.rootX + alignedX && mh.getY() > rootComponent.rootY + alignedY
+				&& mh.getX() < rootComponent.rootX + alignedX + w
+				&& mh.getY() < rootComponent.rootY + alignedY + h;
 	}
 
 	public void setFontSize(float fontSize) {

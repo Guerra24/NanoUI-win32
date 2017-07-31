@@ -75,7 +75,7 @@ public class WindowPreview extends AbstractState {
 		window.getTitlebar().setEnabled(false);
 
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
-		HWND hwnd = new HWND(new Pointer(hwndGLFW));
+		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
 
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
@@ -96,8 +96,8 @@ public class WindowPreview extends AbstractState {
 			@Override
 			public boolean callback(HWND hwndD, Pointer arg1) {
 				if (User32.INSTANCE.IsWindowVisible(hwndD)) {
-					byte[] buffer = new byte[1024];
-					User32Ext.INSTANCE.GetWindowTextA(hwndD, buffer, buffer.length);
+					char[] buffer = new char[1024];
+					User32Ext.INSTANCE.GetWindowTextW(hwndD, buffer, buffer.length);
 					String title = Native.toString(buffer);
 					if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
 						if (!title.isEmpty()) {

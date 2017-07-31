@@ -30,6 +30,7 @@ public class WindowButton extends Button {
 
 	private HWND hwnd;
 	protected boolean active = false;
+	private int icon = -1;
 
 	public WindowButton(float x, float y, float w, float h, String text, HWND hwnd) {
 		super(x, y, w, h, text);
@@ -42,12 +43,23 @@ public class WindowButton extends Button {
 			return;
 		Theme.renderTaskbarWindowButton(window.getNVGID(), preicon, text, font, entypo, rootComponent.rootX + alignedX,
 				window.getHeight() - rootComponent.rootY - alignedY - h, w, h, inside, active, fontSize);
+		if (icon != -1)
+			Theme.renderImage(window.getNVGID(), rootComponent.rootX + alignedX + h * 0.30f,
+					window.getHeight() - rootComponent.rootY - alignedY - h + h * 0.25f, h * 0.50f, h * 0.50f, icon,
+					1f);
+
+	}
+
+	public void reDraw(HWND hwnd, Window window) {
+		this.hwnd = hwnd;
+		if (icon == -1)
+			icon = Util.getIcon(hwnd, window);
 	}
 
 	public HWND getHwnd() {
 		return hwnd;
 	}
-	
+
 	public float getX() {
 		return rootComponent.rootX + alignedX;
 	}

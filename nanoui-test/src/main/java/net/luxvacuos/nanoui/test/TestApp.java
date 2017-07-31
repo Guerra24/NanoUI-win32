@@ -83,7 +83,7 @@ public class TestApp extends AbstractState {
 		window.setBackgroundColor(0, 0, 0, 1f);
 
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
-		HWND hwnd = new HWND(new Pointer(hwndGLFW));
+		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
 
 		long dwp = User32.INSTANCE.GetWindowLongPtr(hwnd, GWL_WNDPROC).longValue();
 		WindowProc proc = new WindowProc() {
@@ -125,7 +125,7 @@ public class TestApp extends AbstractState {
 				return JNI.callPPPP(dwp, hw, uMsg, wParam, lParam);
 			}
 		};
-		User32.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, new Pointer(proc.address()));
+		User32.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, Pointer.createConstant(proc.address()));
 		User32.INSTANCE.SetWindowPos(hwnd, null, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
 		MARGINS margins = new MARGINS();
@@ -133,7 +133,7 @@ public class TestApp extends AbstractState {
 		margins.cxLeftWidth = 0;
 		margins.cxRightWidth = 0;
 		margins.cyBottomHeight = 0;
-		margins.cyTopHeight = 32;
+		margins.cyTopHeight = 33;
 		DWMapiExt.INSTANCE.DwmExtendFrameIntoClientArea(hwnd, margins);
 
 		Box right = new Box(200, 0, 600, 0);

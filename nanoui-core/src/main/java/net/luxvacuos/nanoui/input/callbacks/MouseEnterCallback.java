@@ -18,20 +18,29 @@
  * 
  */
 
-package net.luxvacuos.nanoui.ui;
+package net.luxvacuos.nanoui.input.callbacks;
 
-import net.luxvacuos.nanoui.rendering.api.glfw.Window;
+import org.lwjgl.glfw.GLFWCursorEnterCallback;
 
-public interface IComponent {
+public class MouseEnterCallback extends GLFWCursorEnterCallback {
+
+	private boolean inside;
+
+	private final long windowID;
+
+	public MouseEnterCallback(long windowID) {
+		this.windowID = windowID;
+	}
+
+	@Override
+	public void invoke(long windowID, boolean inside) {
+		if (this.windowID != windowID)
+			return;
+		this.inside = inside;
+	}
 	
-	public void init();
-	
-	public void render(Window window);
-	
-	public void update(float delta, Window window);
-	
-	public void alwaysUpdate(float delta, Window window);
-	
-	public void dispose(Window window);
+	public boolean isInside() {
+		return inside;
+	}
 
 }

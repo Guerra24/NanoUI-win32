@@ -50,6 +50,7 @@ public class Theme {
 	public static final String ICON_CHROME_RESTORE = uniToString(0xE923);
 	public static final String ICON_CHROME_BACK = uniToString(0xE830);
 	public static final String ICON_CHROME_BACK_MIRRORED = uniToString(0xEA47);
+	public static final String ICON_ADD = uniToString(0xE710);
 
 	public static final NVGPaint paintA = NVGPaint.create();
 	public static final NVGPaint paintB = NVGPaint.create();

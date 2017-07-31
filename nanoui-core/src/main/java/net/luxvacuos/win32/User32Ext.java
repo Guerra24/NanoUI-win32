@@ -124,6 +124,40 @@ public interface User32Ext extends StdCallLibrary {
 		}
 	}
 
+	public class RECTSHORT extends Structure {
+		public static final List<String> FIELDS = createFieldsOrder("left", "top", "right", "bottom");
+		public short left;
+		public short top;
+		public short right;
+		public short bottom;
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return FIELDS;
+		}
+
+		@Override
+		public String toString() {
+			return "[(" + left + "," + top + ")(" + right + "," + bottom + ")]";
+		}
+	}
+
+	public class SHELLHOOKINFO extends Structure implements Structure.ByReference {
+		public static final List<String> FIELDS = createFieldsOrder("hWnd", "rc");
+		public HWND hWnd;
+		public RECTSHORT rc;
+
+		public SHELLHOOKINFO(Pointer pointer) {
+			super(pointer);
+			read();
+		}
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return FIELDS;
+		}
+	}
+
 	public static final int MAX_PATH = 260;
 
 	public static final int KEYEVENTF_KEYDOWN = 0;
@@ -150,7 +184,7 @@ public interface User32Ext extends StdCallLibrary {
 
 	boolean EnumWindows(WinUser.WNDENUMPROC lpEnumFunc, Pointer ptr);
 
-	int GetWindowTextA(HWND hWnd, byte[] lpString, int nMaxCount);
+	public int GetWindowTextW(HWND hWnd, char[] buffer, int nMaxCount);
 
 	public LRESULT SendMessage(HWND hwnd, int msg, WPARAM wParam, LPARAM lParam);
 
@@ -171,5 +205,7 @@ public interface User32Ext extends StdCallLibrary {
 	public boolean SetTaskmanWindow(HWND hwnd);
 
 	public boolean SendNotifyMessage(HWND hwnd, int msg, WPARAM wParam, LPARAM lParam);
+
+	public boolean ShowWindowAsync(HWND hwnd, int msg);
 
 }
