@@ -43,6 +43,13 @@ public class MousePosCallback extends GLFWCursorPosCallback {
 		this.dx = this.x - this.lastX;
 		this.dy = this.y - this.lastY;
 	}
+	
+	public void update() {
+		this.lastX = this.x;
+		this.lastY = this.y;
+		this.dx = this.x - this.lastX;
+		this.dy = this.y - this.lastY;
+	}
 
 	public double getX() {
 		return x;

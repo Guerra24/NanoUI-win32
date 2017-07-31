@@ -21,35 +21,35 @@
 package net.luxvacuos.nanoui.taskbar;
 
 import static com.sun.jna.platform.win32.WinUser.GWL_EXSTYLE;
+import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
+import static org.lwjgl.system.windows.User32.WM_KILLFOCUS;
 import static org.lwjgl.system.windows.User32.WS_EX_TOOLWINDOW;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.JNI;
+import org.lwjgl.system.windows.WindowProc;
 
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HWND;
+import com.sun.jna.platform.win32.WinDef.INT_PTR;
 import com.sun.jna.platform.win32.WinDef.RECT;
-import com.sun.jna.platform.win32.WinUser.WNDENUMPROC;
+import com.sun.jna.platform.win32.WinUser.SIZE;
+import com.sun.jna.ptr.IntByReference;
 
-import net.luxvacuos.nanoui.bootstrap.Bootstrap;
-import net.luxvacuos.nanoui.core.App;
 import net.luxvacuos.nanoui.core.AppUI;
-import net.luxvacuos.nanoui.core.Variables;
+import net.luxvacuos.nanoui.core.TaskManager;
 import net.luxvacuos.nanoui.core.states.AbstractState;
-import net.luxvacuos.nanoui.core.states.StateMachine;
-import net.luxvacuos.nanoui.input.KeyboardHandler;
+import net.luxvacuos.nanoui.rendering.api.glfw.Window;
+import net.luxvacuos.nanoui.rendering.api.glfw.WindowHandle;
+import net.luxvacuos.nanoui.rendering.api.glfw.WindowManager;
+import net.luxvacuos.nanoui.resources.ResourceLoader;
 import net.luxvacuos.nanoui.ui.ComponentWindow;
+import net.luxvacuos.nanoui.ui.Font;
 import net.luxvacuos.win32.DWMapiExt;
 import net.luxvacuos.win32.DWMapiExt.DWM_THUMBNAIL_PROPERTIES;
 import net.luxvacuos.win32.DWMapiExt.DWM_TNP;
-import net.luxvacuos.win32.DWMapiExt.PSIZE;
 import net.luxvacuos.win32.User32Ext;
 import net.luxvacuos.win32.User32Ext.Accent;
 import net.luxvacuos.win32.User32Ext.AccentPolicy;
@@ -58,28 +58,42 @@ import net.luxvacuos.win32.User32Ext.WindowCompositionAttributeData;
 
 public class WindowPreview extends AbstractState {
 
-	private ComponentWindow window;
+	private ComponentWindow compWin;
+	private Window window;
+	private WindowHandle handle;
+	private HWND local;
+	private HWND hwndWin;
+	private Font segoeui, segoemdl2;
+	private boolean run;
 
-	private long thumbnail;
+	private IntByReference thumbnail;
 
-	public WindowPreview() {
+	public WindowPreview(Window window, WindowHandle handle) {
 		super("_main");
+		this.window = window;
+		this.handle = handle;
 	}
 
 	@Override
 	public void init() {
 		super.init();
 
-		window = new ComponentWindow(AppUI.getMainWindow());
-		window.setBackgroundColor(0, 0, 0, 0);
-		window.getTitlebar().setEnabled(false);
+		WindowManager.createWindow(handle, window, true);
 
-		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
-		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
+		ResourceLoader loader = window.getResourceLoader();
+		segoeui = loader.loadNVGFont("C:\\Windows\\Fonts\\segoeui", "Segoe UI", true);
+		segoemdl2 = loader.loadNVGFont("C:\\Windows\\Fonts\\segmdl2", "Segoe MDL2", true);
+
+		compWin = new ComponentWindow(window);
+		compWin.setBackgroundColor(0, 0, 0, 0);
+		compWin.getTitlebar().setEnabled(false);
+
+		long hwndGLFW = glfwGetWin32Window(window.getID());
+		local = new HWND(Pointer.createConstant(hwndGLFW));
 
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
-		accent.GradientColor = 0xC8000000;
+		accent.GradientColor = 0xBE282828;
 		accent.AccentFlags = 2;
 		int accentStructSize = accent.size();
 		accent.write();
@@ -90,81 +104,82 @@ public class WindowPreview extends AbstractState {
 		data.SizeOfData = accentStructSize;
 		data.Data = accentPtr;
 
-		User32Ext.INSTANCE.SetWindowCompositionAttribute(hwnd, data);
-		List<HWND> windows = new ArrayList<>();
-		User32Ext.INSTANCE.EnumWindows(new WNDENUMPROC() {
+		User32Ext.INSTANCE.SetWindowCompositionAttribute(local, data);
+		long dwp = User32Ext.INSTANCE.GetWindowLongPtr(local, GWL_WNDPROC);
+		WindowProc proc = new WindowProc() {
+
 			@Override
-			public boolean callback(HWND hwndD, Pointer arg1) {
-				if (User32.INSTANCE.IsWindowVisible(hwndD)) {
-					char[] buffer = new char[1024];
-					User32Ext.INSTANCE.GetWindowTextW(hwndD, buffer, buffer.length);
-					String title = Native.toString(buffer);
-					if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
-						if (!title.isEmpty()) {
-							windows.add(hwndD);
-						}
-				}
-				return true;
+			public long invoke(long hw, int uMsg, long wParam, long lParam) {
+				if (hw == hwndGLFW)
+					switch (uMsg) {
+					case WM_KILLFOCUS:
+						TaskManager.addTask(() -> window.setVisible(false));
+						break;
+					}
+				return JNI.callPPPP(dwp, hw, uMsg, wParam, lParam);
 			}
-		}, null);
-		
-		DWMapiExt.INSTANCE.DwmRegisterThumbnail(hwnd, windows.get(3), thumbnail);
-
-		PSIZE size = new PSIZE();
-		DWMapiExt.INSTANCE.DwmQueryThumbnailSourceSize(thumbnail, size);
-
-		DWM_THUMBNAIL_PROPERTIES props = new DWM_THUMBNAIL_PROPERTIES();
-		props.dwFlags = DWM_TNP.DWM_TNP_VISIBLE | DWM_TNP.DWM_TNP_RECTDESTINATION | DWM_TNP.DWM_TNP_OPACITY;
-
-		props.fVisible = true;
-		props.opacity = (byte) 0xFF;
-
-		props.rcDestination = new RECT();
-		props.rcDestination.left = 0;
-		props.rcDestination.top = 0;
-		props.rcDestination.right = 200;
-		props.rcDestination.bottom = 200;
-		if (size.x < 200)
-			props.rcDestination.right = props.rcDestination.left + size.x;
-		if (size.y < 200)
-			props.rcDestination.bottom = props.rcDestination.top + size.y;
-
-		DWMapiExt.INSTANCE.DwmUpdateThumbnailProperties(thumbnail, props);
-		AppUI.getMainWindow().setVisible(true);
+		};
+		User32.INSTANCE.SetWindowLongPtr(local, GWL_WNDPROC, Pointer.createConstant(proc.address()));
+		User32Ext.INSTANCE.SetWindowLongPtr(local, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
+		thumbnail = new IntByReference();
 	}
 
 	@Override
 	public void dispose() {
 		super.dispose();
-		window.dispose(AppUI.getMainWindow());
-		DWMapiExt.INSTANCE.DwmUnregisterThumbnail(thumbnail);
+		compWin.dispose(window);
+		segoeui.dispose();
+		segoemdl2.dispose();
+		if (thumbnail.getValue() != 0)
+			DWMapiExt.INSTANCE.DwmUnregisterThumbnail(new INT_PTR(thumbnail.getValue()));
 	}
 
 	@Override
 	public void update(float delta) {
-		window.update(delta, AppUI.getMainWindow());
-		KeyboardHandler kbh = AppUI.getMainWindow().getKeyboardHandler();
-		if (kbh.isShiftPressed() && kbh.isKeyPressed(GLFW.GLFW_KEY_ESCAPE))
-			StateMachine.stop();
+		compWin.update(delta, window);
+		if (run) {
+			if (thumbnail.getValue() != 0)
+				DWMapiExt.INSTANCE.DwmUnregisterThumbnail(new INT_PTR(thumbnail.getValue()));
+			DWMapiExt.INSTANCE.DwmRegisterThumbnail(local, hwndWin, thumbnail);
+
+			SIZE size = new SIZE();
+			DWMapiExt.INSTANCE.DwmQueryThumbnailSourceSize(new INT_PTR(thumbnail.getValue()), size);
+			size.read();
+			float aspect = (float) size.cx / (float) size.cy;
+
+			DWM_THUMBNAIL_PROPERTIES props = new DWM_THUMBNAIL_PROPERTIES();
+			props.dwFlags = DWM_TNP.DWM_TNP_VISIBLE | DWM_TNP.DWM_TNP_RECTDESTINATION | DWM_TNP.DWM_TNP_OPACITY;
+
+			props.fVisible = true;
+			props.opacity = (byte) 0xFF;
+
+			props.rcDestination = new RECT();
+			props.rcDestination.left = 0;
+			props.rcDestination.top = 100 - (int) (200 / aspect / 2);
+			props.rcDestination.right = props.rcDestination.left + 200;
+			props.rcDestination.bottom = props.rcDestination.top + (int) (200 / aspect);
+
+			props.write();
+			DWMapiExt.INSTANCE.DwmUpdateThumbnailProperties(new INT_PTR(thumbnail.getValue()), props);
+			TaskManager.addTask(() -> window.setVisible(true));
+			run = false;
+		}
 	}
 
 	@Override
 	public void render(float alpha) {
 		AppUI.clearBuffer(GL11.GL_COLOR_BUFFER_BIT);
 		AppUI.clearColors(0f, 0f, 0f, 0);
-		window.render(AppUI.getMainWindow());
+		compWin.render(window);
 	}
 
-	public static void main(String[] args) {
-		new Bootstrap(args);
-		GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-		Variables.WIDTH = 200;
-		Variables.HEIGHT = 200;
-		Variables.X = 400;
-		Variables.Y = vidmode.height() - 240;
-		Variables.ALWAYS_ON_TOP = true;
-		Variables.DECORATED = false;
-		new App(new WindowPreview());
+	public Window getWindow() {
+		return window;
+	}
+
+	public void setHwnd(HWND hwndWin) {
+		this.hwndWin = hwndWin;
+		run = true;
 	}
 
 }

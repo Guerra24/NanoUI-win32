@@ -25,8 +25,11 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.WinDef.HWND;
+import com.sun.jna.platform.win32.WinDef.INT_PTR;
 import com.sun.jna.platform.win32.WinDef.RECT;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
+import com.sun.jna.platform.win32.WinUser.SIZE;
+import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 
@@ -128,12 +131,12 @@ public interface DWMapiExt extends StdCallLibrary {
 
 	public HRESULT DwmExtendFrameIntoClientArea(HWND window, MARGINS margins);
 
-	public HRESULT DwmRegisterThumbnail(HWND hwndDestination, HWND hwndSource, long phThumbnailId);
+	public HRESULT DwmRegisterThumbnail(HWND hwndDestination, HWND hwndSource, IntByReference phThumbnailId);
 
-	public HRESULT DwmUnregisterThumbnail(long hThumbnailId);
+	public HRESULT DwmUnregisterThumbnail(INT_PTR hThumbnailId);
 
-	public HRESULT DwmQueryThumbnailSourceSize(long hThumbnail, PSIZE pSize);
+	public HRESULT DwmQueryThumbnailSourceSize(INT_PTR hThumbnail, SIZE size);
 
-	public HRESULT DwmUpdateThumbnailProperties(long hThumbnailId, DWM_THUMBNAIL_PROPERTIES ptnProperties);
+	public HRESULT DwmUpdateThumbnailProperties(INT_PTR hThumbnailId, DWM_THUMBNAIL_PROPERTIES ptnProperties);
 
 }

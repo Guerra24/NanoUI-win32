@@ -27,8 +27,8 @@ import static com.sun.jna.platform.win32.WinUser.MOD_WIN;
 import static com.sun.jna.platform.win32.WinUser.MONITOR_DEFAULTTOPRIMARY;
 import static com.sun.jna.platform.win32.WinUser.SW_HIDE;
 import static com.sun.jna.platform.win32.WinUser.SW_MAXIMIZE;
-import static com.sun.jna.platform.win32.WinUser.SW_RESTORE;
 import static com.sun.jna.platform.win32.WinUser.SW_MINIMIZE;
+import static com.sun.jna.platform.win32.WinUser.SW_RESTORE;
 import static com.sun.jna.platform.win32.WinUser.SW_SHOW;
 import static com.sun.jna.platform.win32.WinUser.WM_HOTKEY;
 import static com.sun.jna.platform.win32.WinUser.WM_QUIT;
@@ -107,6 +107,7 @@ public class TaskBar extends AbstractState {
 	private Container tasks;
 	private Background backgroundWindow;
 	private ContextWindow contextWindow;
+	private WindowPreview previewWindow;
 	private boolean running = true;
 
 	private int keysThreadID;
@@ -193,6 +194,11 @@ public class TaskBar extends AbstractState {
 										GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
 										contextWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
 										contextWindow.setHwnd(hwndD);
+									});
+									btn.setOnHover(() -> {
+										GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+										previewWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
+										previewWindow.setHwnd(hwndD);
 									});
 									btn.reDraw(hwndD, AppUI.getMainWindow());
 									tasks.addComponent(btn);
@@ -346,6 +352,11 @@ public class TaskBar extends AbstractState {
 								contextWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
 								contextWindow.setHwnd(hwndD);
 							});
+							btn.setOnHover(() -> {
+								GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+								previewWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
+								previewWindow.setHwnd(hwndD);
+							});
 							btn.reDraw(hwndD, AppUI.getMainWindow());
 							tasks.addComponent(btn);
 							windows.put(hwndD, btn);
@@ -407,8 +418,47 @@ public class TaskBar extends AbstractState {
 		}
 
 		createContext();
+		createPreview();
 
 		System.gc();
+	}
+
+	private void createPreview() {
+		Variables.X = -1000;
+		Variables.Y = -1000;
+		WindowHandle handle = WindowManager.generateHandle(200, 200, "");
+		handle.isDecorated(false);
+		handle.isVisible(false);
+		PixelBufferHandle pb = new PixelBufferHandle();
+		pb.setSrgbCapable(1);
+		pb.setSamples(4);
+		handle.setPixelBuffer(pb);
+		Window prevWindow = WindowManager.generate(handle);
+
+		Thread prevThr = new Thread(() -> {
+			previewWindow = new WindowPreview(prevWindow, handle);
+			previewWindow.init();
+			float delta = 0;
+			float accumulator = 0f;
+			float interval = 1f / 30;
+			float alpha = 0;
+			int fps = 30;
+			Window window = previewWindow.getWindow();
+			while (running) {
+				delta = window.getDelta();
+				accumulator += delta;
+				while (accumulator >= interval) {
+					previewWindow.update(interval);
+					accumulator -= interval;
+				}
+				alpha = accumulator / interval;
+				previewWindow.render(alpha);
+				window.updateDisplay(fps);
+			}
+			previewWindow.dispose();
+			window.dispose();
+		});
+		prevThr.start();
 	}
 
 	private void createContext() {

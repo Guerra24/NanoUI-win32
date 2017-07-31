@@ -181,6 +181,9 @@ public final class WindowManager {
 	}
 
 	public static void update() {
+		for (Window window : windows) {
+			window.getMouseHandler().update();
+		}
 		glfwPollEvents();
 	}
 

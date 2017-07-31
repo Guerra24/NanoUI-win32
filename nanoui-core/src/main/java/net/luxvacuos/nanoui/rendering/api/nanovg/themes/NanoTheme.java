@@ -90,7 +90,7 @@ public class NanoTheme implements ITheme {
 	protected NVGColor contextButtonColor = Theme.setColor("#646464C8"),
 			contextButtonHighlight = Theme.setColor("#FFFFFFC8");
 	protected NVGColor titleBarButtonColor = Theme.setColor("#00000000"),
-			titleBarButtonHighlight = Theme.setColor("#788A89FF"),
+			titleBarButtonHighlight = Theme.setColor("#444444FF"),
 			titleBarButtonCloseHighlight = Theme.setColor("#E81123FF");
 
 	public NanoTheme() {

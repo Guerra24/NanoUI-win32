@@ -25,12 +25,16 @@ import com.sun.jna.platform.win32.WinDef.HWND;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 import net.luxvacuos.nanoui.ui.Button;
+import net.luxvacuos.nanoui.ui.OnAction;
 
 public class WindowButton extends Button {
 
 	private HWND hwnd;
 	protected boolean active = false;
 	private int icon = -1;
+	private OnAction onHover;
+	private float timer;
+	private boolean hover = false;
 
 	public WindowButton(float x, float y, float w, float h, String text, HWND hwnd) {
 		super(x, y, w, h, text);
@@ -50,10 +54,35 @@ public class WindowButton extends Button {
 
 	}
 
+	@Override
+	public void update(float delta, Window window) {
+		if (!enabled)
+			return;
+		super.update(delta, window);
+		if(pressed || pressedRight)
+			hover = true;
+		if (insideButton(window.getMouseHandler()) && !hover) {
+			timer += delta * 2f;
+			if (timer >= 1) {
+				onHover.onAction();
+				hover = true;
+			}
+		} else {
+			timer = 0;
+		}
+		if(!insideButton(window.getMouseHandler())) {
+			hover = false;
+		}
+	}
+
 	public void reDraw(HWND hwnd, Window window) {
 		this.hwnd = hwnd;
 		if (icon == -1)
 			icon = Util.getIcon(hwnd, window);
+	}
+
+	public void setOnHover(OnAction onHover) {
+		this.onHover = onHover;
 	}
 
 	public HWND getHwnd() {

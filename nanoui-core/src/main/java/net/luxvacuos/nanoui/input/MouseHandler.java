@@ -22,6 +22,7 @@ package net.luxvacuos.nanoui.input;
 
 import org.lwjgl.glfw.GLFW;
 
+import net.luxvacuos.nanoui.core.TaskManager;
 import net.luxvacuos.nanoui.input.callbacks.MouseButtonCallback;
 import net.luxvacuos.nanoui.input.callbacks.MouseEnterCallback;
 import net.luxvacuos.nanoui.input.callbacks.MousePosCallback;
@@ -54,6 +55,10 @@ public class MouseHandler {
 
 		this.window = window;
 	}
+	
+	public void update() {
+		this.posCallback.update();
+	}
 
 	public boolean isInside() {
 		return this.enterCallback.isInside();
@@ -78,7 +83,7 @@ public class MouseHandler {
 	}
 
 	public float getDY() {
-		return (float) this.posCallback.getDY();
+		return (float) -this.posCallback.getDY();
 	}
 
 	public boolean isButtonPressedRaw(int button) {
@@ -102,7 +107,7 @@ public class MouseHandler {
 	}
 
 	public static void setGrabbed(long windowID, boolean grab) {
-		GLFW.glfwSetInputMode(windowID, GLFW.GLFW_CURSOR, grab ? GLFW.GLFW_CURSOR_DISABLED : GLFW.GLFW_CURSOR_NORMAL);
+		TaskManager.addTask(() -> GLFW.glfwSetInputMode(windowID, GLFW.GLFW_CURSOR,
+				grab ? GLFW.GLFW_CURSOR_DISABLED : GLFW.GLFW_CURSOR_NORMAL));
 	}
-
 }
