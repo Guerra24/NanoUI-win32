@@ -6,6 +6,6 @@ Custom Taskbar for Win10
 
 # WIP
 
-Custom Title Bar, based on the UWP one.
+Test application that uses custom titlebars and NanoUI.
 
-![img](https://puu.sh/wPRHn/4c5f66fe72.gif)
+![img](https://puu.sh/x1emX/aee3c0c0fd.png)

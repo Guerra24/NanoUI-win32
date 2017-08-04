@@ -89,7 +89,7 @@ public class ComponentWindow {
 		TitleBarButton forwardBtn = new TitleBarButton(0, 0, 48, 32);
 		forwardBtn.setStyle(ButtonStyle.RIGHT_ARROW);
 		titlebar.getLeft().addComponent(backBtn);
-		titlebar.getLeft().addComponent(forwardBtn);
+		//titlebar.getLeft().addComponent(forwardBtn);
 		titlebar.getLeft().addComponent(titleText);
 	}
 

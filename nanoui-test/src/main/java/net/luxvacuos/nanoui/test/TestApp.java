@@ -31,6 +31,7 @@ import static org.lwjgl.system.windows.User32.SWP_NOMOVE;
 import static org.lwjgl.system.windows.User32.SWP_NOSIZE;
 import static org.lwjgl.system.windows.User32.WM_NCCALCSIZE;
 import static org.lwjgl.system.windows.User32.WM_NCHITTEST;
+import static org.lwjgl.nanovg.NanoVG.*;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
@@ -53,13 +54,12 @@ import net.luxvacuos.nanoui.core.states.StateMachine;
 import net.luxvacuos.nanoui.input.KeyboardHandler;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.ui.Alignment;
-import net.luxvacuos.nanoui.ui.Box;
 import net.luxvacuos.nanoui.ui.Button;
 import net.luxvacuos.nanoui.ui.ComponentWindow;
-import net.luxvacuos.nanoui.ui.Direction;
-import net.luxvacuos.nanoui.ui.FlowLayout;
-import net.luxvacuos.nanoui.ui.ScrollArea;
-import net.luxvacuos.nanoui.ui.TextArea;
+import net.luxvacuos.nanoui.ui.Container;
+import net.luxvacuos.nanoui.ui.EditBox;
+import net.luxvacuos.nanoui.ui.Image;
+import net.luxvacuos.nanoui.ui.Text;
 import net.luxvacuos.win32.DWMapiExt;
 import net.luxvacuos.win32.DWMapiExt.MARGINS;
 import net.luxvacuos.win32.DWMapiExt.NCCALCSIZE_PARAMS;
@@ -80,7 +80,7 @@ public class TestApp extends AbstractState {
 
 		window = new ComponentWindow(AppUI.getMainWindow());
 		window.init(AppUI.getMainWindow());
-		window.setBackgroundColor(0, 0, 0, 1f);
+		window.setBackgroundColor(0, 0, 0, 0f);
 
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
 		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
@@ -110,13 +110,17 @@ public class TestApp extends AbstractState {
 						WINDOWPLACEMENT winpl = new WINDOWPLACEMENT();
 						User32Ext.INSTANCE.GetWindowPlacement(hwnd, winpl);
 
-						par.rgrc[0].left += 8;
-						if (winpl.showCmd != SW_MAXIMIZE)
+						if (winpl.showCmd != SW_MAXIMIZE) {
+							par.rgrc[0].left += 8;
 							par.rgrc[0].top += 0;
-						else
+							par.rgrc[0].right -= 8;
+							par.rgrc[0].bottom -= 8;
+						} else {
+							par.rgrc[0].left += 8;
 							par.rgrc[0].top += 7;
-						par.rgrc[0].right -= 8;
-						par.rgrc[0].bottom -= 8;
+							par.rgrc[0].right -= 8;
+							par.rgrc[0].bottom -= 8;
+						}
 						par.write();
 						return lParam;
 					}
@@ -136,37 +140,50 @@ public class TestApp extends AbstractState {
 		margins.cyTopHeight = 33;
 		DWMapiExt.INSTANCE.DwmExtendFrameIntoClientArea(hwnd, margins);
 
-		Box right = new Box(200, 0, 600, 0);
-		right.setColor("#8C8C8C8C");
-		right.setResizeV(true);
-		right.setResizeH(true);
-		TextArea text = new TextArea(
-				"Lorem ipsum dolor sit amet, ut dicta doctus pertinax ius. Te pro tantas eruditi, aperiri epicuri probatus sea eu. Duo ad ridens melius aeterno, ei eligendi laboramus voluptatum his. At graece hendrerit nec, ius homero patrioque an. Pro cu dicunt perpetua percipitur.\n"
-						+ "\n"
-						+ "Has ex option vivendo imperdiet. Aeque deserunt at cum. Ut vis nostrud platonem, est aliquam recusabo ad. Te eum quas rebum equidem, no quo case ubique accommodare, pri ex propriae sapientem.\n"
-						+ "\n"
-						+ "Ius aliquando definiebas ex, ad mei quando nonumy menandri, ut cum principes expetendis. Vim ea veri cetero feugait, id vim dolore nonumes appareat, equidem deterruisset an eos. Qui te deleniti salutatus. Mei electram laboramus torquatos id, cum ei cibo summo electram, eam at facilis percipit. Eam atqui iuvaret imperdiet in. Ridens sensibus duo ad, has veniam accusamus ex.\n"
-						+ "\n"
-						+ "Ne porro docendi cum, paulo labores assueverit ne est. No vel sanctus menandri prodesset. In ridens aliquam vim, sit in elitr adipisci. Nam ut veniam petentium. Per id suas urbanitas, integre elaboraret ne quo. Ea habeo ponderum consetetur qui. Per populo doctus lobortis et.\n"
-						+ "\n"
-						+ "Sed ex nulla errem utroque, eu persius veritus volumus mea. Nisl legere qualisque ex mei, te eleifend pericula usu. Ea est aeque interpretaris. Pericula dissentias mel ei, te saperet utroque definiebas qui. Eripuit omittantur an vel, ius eu prompta delectus accusamus, eum et paulo audire prodesset. Cu denique mediocrem sit, mundi mediocrem ut vel. ",
-				214 + 20, -20, 600 - 40);
-		text.setWindowAlignment(Alignment.LEFT_TOP);
-		text.setResizeH(true);
-		window.addComponent(right);
-		window.addComponent(text);
+		Container center = new Container(0, 0, 200, 250);
+		center.setAlignment(Alignment.CENTER);
+		center.setWindowAlignment(Alignment.CENTER);
+		
+		Image logo = new Image(0, 0, 170.6666666666667f, 85.33333333333333f, AppUI.getMainWindow().getResourceLoader().loadNVGTexture("logo"), true);
+		logo.setAlignment(Alignment.BOTTOM);
+		logo.setWindowAlignment(Alignment.TOP);
+		center.addComponent(logo);
 
-		ScrollArea left = new ScrollArea(0, 0, 200, 0, 0, 0);
-		left.setResizeH(false);
-		left.setLayout(new FlowLayout(Direction.DOWN, 10, 0));
-		for (int i = 0; i < 16; i++) {
-			Button btn = new Button(0, 0, 184, 40, "Button " + i);
-			btn.setWindowAlignment(Alignment.LEFT_TOP);
-			btn.setAlignment(Alignment.RIGHT_BOTTOM);
-			left.addComponent(btn);
-		}
-		window.addComponent(left);
+		Text username = new Text("Username:", -90, 140);
+		username.setAlign(NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM);
+		username.setWindowAlignment(Alignment.BOTTOM);
+		center.addComponent(username);
+
+		EditBox user = new EditBox(0, 120, 180, 30, "");
+		user.setAlignment(Alignment.CENTER);
+		user.setWindowAlignment(Alignment.BOTTOM);
+		center.addComponent(user);
+
+		Text password = new Text("Password:", -90, 80);
+		password.setAlign(NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM);
+		password.setWindowAlignment(Alignment.BOTTOM);
+		center.addComponent(password);
+
+		EditBox pass = new EditBox(0, 60, 180, 30, "");
+		pass.setAlignment(Alignment.CENTER);
+		pass.setWindowAlignment(Alignment.BOTTOM);
+		center.addComponent(pass);
+
+		Button login = new Button(0, 20, 60, 30, "Login");
+		login.setAlignment(Alignment.CENTER);
+		login.setWindowAlignment(Alignment.BOTTOM);
+		center.addComponent(login);
+
+		window.addComponent(center);
+
 		AppUI.getMainWindow().setVisible(true);
+		AppUI.getMainWindow().setOnRefresh((windowID) -> {
+			window.update(0, AppUI.getMainWindow());
+			AppUI.clearBuffer(GL11.GL_COLOR_BUFFER_BIT);
+			AppUI.clearColors(0f, 0f, 0f, 0);
+			Window wind = AppUI.getMainWindow();
+			window.render(wind);
+		});
 	}
 
 	@Override

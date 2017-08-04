@@ -20,9 +20,12 @@
 
 package net.luxvacuos.nanoui.ui;
 
+import static org.lwjgl.nanovg.NanoVG.*;
+
 import java.util.List;
 
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
+import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 
 public class Container extends Component {
 
@@ -38,7 +41,19 @@ public class Container extends Component {
 
 	@Override
 	public void render(Window window) {
+		nvgSave(window.getNVGID());
+		nvgIntersectScissor(window.getNVGID(), rootComponent.rootX + alignedX,
+				window.getHeight() - rootComponent.rootY - alignedY - h, w, h);
 		comp.render(window);
+		if (Theme.DEBUG) {
+			nvgBeginPath(window.getNVGID());
+			nvgRect(window.getNVGID(), rootComponent.rootX + alignedX,
+					window.getHeight() - rootComponent.rootY - alignedY - h, w, h);
+			nvgStrokeWidth(window.getNVGID(), Theme.DEBUG_STROKE);
+			nvgStrokeColor(window.getNVGID(), Theme.debugB);
+			nvgStroke(window.getNVGID());
+		}
+		nvgRestore(window.getNVGID());
 	}
 
 	@Override
@@ -66,12 +81,12 @@ public class Container extends Component {
 	public void addComponent(Component component) {
 		comp.addComponent(component);
 	}
-	
-	public void removeComponent(Component component, Window window){
+
+	public void removeComponent(Component component, Window window) {
 		comp.removeComponent(component, window);
 	}
-	
-	public List<Component> getComponents(){
+
+	public List<Component> getComponents() {
 		return comp.getComponents();
 	}
 

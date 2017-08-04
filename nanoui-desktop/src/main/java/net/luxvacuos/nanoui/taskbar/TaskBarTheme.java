@@ -29,10 +29,10 @@ import static org.lwjgl.nanovg.NanoVG.nvgFill;
 import static org.lwjgl.nanovg.NanoVG.nvgFillColor;
 import static org.lwjgl.nanovg.NanoVG.nvgFontFace;
 import static org.lwjgl.nanovg.NanoVG.nvgFontSize;
+import static org.lwjgl.nanovg.NanoVG.nvgIntersectScissor;
 import static org.lwjgl.nanovg.NanoVG.nvgRect;
 import static org.lwjgl.nanovg.NanoVG.nvgRestore;
 import static org.lwjgl.nanovg.NanoVG.nvgSave;
-import static org.lwjgl.nanovg.NanoVG.nvgScissor;
 import static org.lwjgl.nanovg.NanoVG.nvgText;
 import static org.lwjgl.nanovg.NanoVG.nvgTextAlign;
 import static org.lwjgl.nanovg.NanoVG.nvgTextBounds;
@@ -84,7 +84,7 @@ public class TaskBarTheme extends NanoTheme {
 		}
 
 		nvgSave(vg);
-		nvgScissor(vg, x, y, w, h);
+		nvgIntersectScissor(vg, x, y, w, h);
 		nvgFontSize(vg, fontSize);
 		nvgFontFace(vg, font);
 		nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
@@ -139,7 +139,7 @@ public class TaskBarTheme extends NanoTheme {
 		}
 
 		nvgSave(vg);
-		nvgScissor(vg, x + 5, y + 5, w - 10, h - 10);
+		nvgIntersectScissor(vg, x + 5, y + 5, w - 10, h - 1);
 		nvgFontSize(vg, fontSize);
 		nvgFontFace(vg, font);
 		nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);

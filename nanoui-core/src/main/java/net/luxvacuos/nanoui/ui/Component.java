@@ -120,7 +120,7 @@ public abstract class Component implements IComponent {
 			throw new UnsupportedOperationException("Invalid Alignment: " + windowAlignment.name());
 		}
 		if (resizeH)
-			w = rootComponent.rootW;
+			w = rootComponent.rootW - x;
 		if (resizeV)
 			h = rootComponent.rootH;
 

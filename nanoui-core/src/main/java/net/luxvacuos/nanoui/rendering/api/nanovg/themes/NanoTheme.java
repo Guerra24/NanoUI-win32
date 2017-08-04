@@ -44,6 +44,7 @@ import static org.lwjgl.nanovg.NanoVG.nvgFontFace;
 import static org.lwjgl.nanovg.NanoVG.nvgFontSize;
 import static org.lwjgl.nanovg.NanoVG.nvgImagePattern;
 import static org.lwjgl.nanovg.NanoVG.nvgImageSize;
+import static org.lwjgl.nanovg.NanoVG.nvgIntersectScissor;
 import static org.lwjgl.nanovg.NanoVG.nvgLineTo;
 import static org.lwjgl.nanovg.NanoVG.nvgLinearGradient;
 import static org.lwjgl.nanovg.NanoVG.nvgMoveTo;
@@ -61,13 +62,10 @@ import static org.lwjgl.nanovg.NanoVG.nvgTextAlign;
 import static org.lwjgl.nanovg.NanoVG.nvgTextBounds;
 import static org.lwjgl.nanovg.NanoVG.nvgTextMetrics;
 import static org.lwjgl.system.MemoryUtil.memAddress;
-import static org.lwjgl.system.MemoryUtil.memAllocInt;
-import static org.lwjgl.system.MemoryUtil.memFree;
 import static org.lwjgl.system.MemoryUtil.memUTF8;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.nanovg.NVGColor;
@@ -83,8 +81,8 @@ public class NanoTheme implements ITheme {
 	private final FloatBuffer lineh = BufferUtils.createFloatBuffer(1);
 	private final NVGTextRow.Buffer rows = NVGTextRow.create(3);
 
-	protected NVGColor buttonColor = Theme.rgba(255, 255, 255, 255), buttonHighlight = Theme.rgba(190, 190, 190, 255),
-			buttonTextColor = Theme.rgba(60, 60, 60, 255);
+	protected NVGColor buttonColor = Theme.rgba(51, 51, 51, 255), buttonHighlight = Theme.rgba(80, 80, 80, 255),
+			buttonTextColor = Theme.rgba(255, 255, 255, 255);
 	protected NVGColor toggleButtonColor = Theme.setColor(1f, 1f, 1f, 1f),
 			toggleButtonHighlight = Theme.setColor(0.5f, 1f, 0.5f, 1f);
 	protected NVGColor contextButtonColor = Theme.setColor("#646464C8"),
@@ -94,18 +92,21 @@ public class NanoTheme implements ITheme {
 			titleBarButtonCloseHighlight = Theme.setColor("#E81123FF");
 
 	public NanoTheme() {
-		buttonColor = Theme.rgba(255, 255, 255, 0);
-		buttonHighlight = Theme.rgba(255, 255, 255, 40);
-		buttonTextColor = Theme.rgba(255, 255, 255, 255);
 	}
 
 	@Override
 	public void renderTitlebar(long vg, float w, NVGColor color) {
 		nvgSave(vg);
+		nvgIntersectScissor(vg, 0, 1, w, Variables.TITLEBAR_HEIGHT);
 		nvgBeginPath(vg);
 		nvgRect(vg, 0, 1, w, Variables.TITLEBAR_HEIGHT);
 		nvgFillColor(vg, color);
 		nvgFill(vg);
+		if (Theme.DEBUG) {
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 	}
 
@@ -124,6 +125,14 @@ public class NanoTheme implements ITheme {
 		nvgText(vg, x, y, text);
 		float[] bounds = new float[4];
 		nvgTextBounds(vg, x, y, text, bounds);
+		if (Theme.DEBUG) {
+			nvgIntersectScissor(vg, bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1]);
+			nvgBeginPath(vg);
+			nvgRect(vg, bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1]);
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 		return bounds[2];
 	}
@@ -132,6 +141,7 @@ public class NanoTheme implements ITheme {
 	public void renderTitleBarButton(long vg, float x, float y, float w, float h, ButtonStyle style,
 			boolean highlight) {
 		nvgSave(vg);
+		nvgIntersectScissor(vg, x, y, w, h);
 		nvgBeginPath(vg);
 		nvgRect(vg, x, y, w, h);
 		if (highlight)
@@ -142,6 +152,12 @@ public class NanoTheme implements ITheme {
 		else
 			nvgFillColor(vg, titleBarButtonColor);
 		nvgFill(vg);
+
+		if (Theme.DEBUG) {
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 
 		switch (style) {
 		case CLOSE:
@@ -221,6 +237,14 @@ public class NanoTheme implements ITheme {
 		nvgText(vg, x, y, text);
 		float[] bounds = new float[4];
 		nvgTextBounds(vg, x, y, text, bounds);
+		if (Theme.DEBUG) {
+			nvgIntersectScissor(vg, bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1]);
+			nvgBeginPath(vg);
+			nvgRect(vg, bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1]);
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 		return bounds[2];
 	}
@@ -229,39 +253,50 @@ public class NanoTheme implements ITheme {
 	public void renderImage(long vg, float x, float y, float w, float h, int image, float alpha) {
 		NVGPaint imgPaint = paintB;
 		nvgSave(vg);
+		nvgIntersectScissor(vg, x, y, w, h);
 		nvgImagePattern(vg, x, y, w, h, 0, image, alpha, imgPaint);
 		nvgBeginPath(vg);
 		nvgRect(vg, x, y, w, h);
 		nvgFillPaint(vg, imgPaint);
 		nvgFill(vg);
+		if (Theme.DEBUG) {
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 	}
 
 	@Override
 	public void renderImage(long vg, float x, float y, int image, float alpha) {
 		NVGPaint imgPaint = paintB;
-		IntBuffer imgw = memAllocInt(1), imgh = memAllocInt(1);
+		int[] iw = new int[1], ih = new int[1];
 		nvgSave(vg);
-		nvgImageSize(vg, image, imgw, imgh);
-		nvgImagePattern(vg, x, y, imgw.get(0), imgh.get(0), 0, image, alpha, imgPaint);
+		nvgImageSize(vg, image, iw, ih);
+		nvgIntersectScissor(vg, x, y, iw[0], ih[0]);
+		nvgImagePattern(vg, x, y, iw[0], ih[0], 0, image, alpha, imgPaint);
 		nvgBeginPath(vg);
-		nvgRect(vg, x, y, imgw.get(0), imgh.get(0));
+		nvgRect(vg, x, y, iw[0], iw[0]);
 		nvgFillPaint(vg, imgPaint);
 		nvgFill(vg);
+		if (Theme.DEBUG) {
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
-		memFree(imgh);
-		memFree(imgw);
 	}
 
 	@Override
 	public void renderEditBoxBase(long vg, float x, float y, float w, float h, boolean selected) {
 		nvgSave(vg);
+		nvgIntersectScissor(vg, x, y, w, h);
 		nvgBeginPath(vg);
 		nvgRect(vg, x + 1, y + 1, w - 2, h - 2);
 		if (selected)
-			nvgFillColor(vg, Theme.rgba(255, 255, 255, 255, colorA));
-		else
 			nvgFillColor(vg, Theme.rgba(150, 150, 150, 255, colorA));
+		else
+			nvgFillColor(vg, Theme.rgba(100, 100, 100, 255, colorA));
 		nvgFill(vg);
 
 		nvgBeginPath(vg);
@@ -272,6 +307,13 @@ public class NanoTheme implements ITheme {
 			nvgStrokeColor(vg, Theme.rgba(70, 70, 70, 255, colorA));
 		nvgStrokeWidth(vg, 1);
 		nvgStroke(vg);
+		if (Theme.DEBUG) {
+			nvgBeginPath(vg);
+			nvgRect(vg, x, y, w, h);
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 	}
 
@@ -294,6 +336,15 @@ public class NanoTheme implements ITheme {
 			nvgStrokeColor(vg, Theme.rgba(0, 0, 0, 255, colorA));
 			nvgStroke(vg);
 		}
+		if (Theme.DEBUG) {
+			nvgBeginPath(vg);
+			nvgRect(vg, x, y, w, h);
+			nvgIntersectScissor(vg, bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1]);
+			nvgRect(vg, bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1]);
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 	}
 
@@ -302,7 +353,7 @@ public class NanoTheme implements ITheme {
 			float w, float h, boolean highlight, float fontSize, float preiconSize) {
 		float tw, iw = 0;
 		nvgSave(vg);
-
+		nvgIntersectScissor(vg, x, y, w, h);
 		nvgBeginPath(vg);
 		nvgRect(vg, x, y, w, h);
 		if (highlight)
@@ -320,7 +371,7 @@ public class NanoTheme implements ITheme {
 			iw = nvgTextBounds(vg, 0, 0, preicon, (FloatBuffer) null);
 			iw += h * 0.15f;
 		}
-
+		float[] preiconBounds = new float[4];
 		if (preicon != null) {
 			nvgFontSize(vg, preiconSize);
 			nvgFontFace(vg, entypo);
@@ -328,20 +379,45 @@ public class NanoTheme implements ITheme {
 			if (text.isEmpty()) {
 				nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 				nvgText(vg, x + w * 0.5f, y + h * 0.5f, preicon);
+				nvgTextBounds(vg, x + w * 0.5f, y + h * 0.5f, preicon, preiconBounds);
 			} else {
 				nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 				nvgText(vg, x + w * 0.5f - tw * 0.5f - iw * 0.75f, y + h * 0.5f, preicon);
+				nvgTextBounds(vg, x + w * 0.5f - tw * 0.5f - iw * 0.75f, y + h * 0.5f, preicon, preiconBounds);
 			}
 		}
+		float[] bounds = new float[4];
 
-		nvgSave(vg);
-		nvgScissor(vg, x, y, w, h);
 		nvgFontSize(vg, fontSize);
 		nvgFontFace(vg, font);
 		nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 		nvgFillColor(vg, buttonTextColor);
+		nvgTextBounds(vg, x + w * 0.5f - tw * 0.5f + iw * 0.25f, y + h * 0.5f, text, bounds);
 		nvgText(vg, x + w * 0.5f - tw * 0.5f + iw * 0.25f, y + h * 0.5f, text);
-		nvgRestore(vg);
+		if (Theme.DEBUG) {
+			nvgBeginPath(vg);
+			nvgRect(vg, x, y, w, h);
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+
+			nvgBeginPath(vg);
+			nvgMoveTo(vg, bounds[0], bounds[1]);
+			nvgLineTo(vg, bounds[2], bounds[1]);
+			nvgLineTo(vg, bounds[2], bounds[3]);
+			nvgLineTo(vg, bounds[0], bounds[3]);
+			nvgLineTo(vg, bounds[0], bounds[1]);
+			if (preicon != null) {
+				nvgMoveTo(vg, preiconBounds[0], preiconBounds[1]);
+				nvgLineTo(vg, preiconBounds[2], preiconBounds[1]);
+				nvgLineTo(vg, preiconBounds[2], preiconBounds[3]);
+				nvgLineTo(vg, preiconBounds[0], preiconBounds[3]);
+				nvgLineTo(vg, preiconBounds[0], preiconBounds[1]);
+			}
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugC);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 	}
 
@@ -434,7 +510,6 @@ public class NanoTheme implements ITheme {
 		ByteBuffer paragraph = memUTF8(text);
 
 		nvgSave(vg);
-
 		nvgFontSize(vg, fontSize);
 		nvgFontFace(vg, font);
 		nvgTextAlign(vg, align);
@@ -453,7 +528,14 @@ public class NanoTheme implements ITheme {
 			}
 			start = rows.get(nrows - 1).next();
 		}
-
+		if (Theme.DEBUG) {
+			nvgIntersectScissor(vg, x, y, width, yy - y);
+			nvgBeginPath(vg);
+			nvgRect(vg, x, y, width, yy - y);
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 		return yy - y;
 	}
@@ -461,10 +543,18 @@ public class NanoTheme implements ITheme {
 	@Override
 	public void renderBox(long vg, float x, float y, float w, float h, NVGColor color, float rt, float lt, float rb,
 			float lb) {
+		nvgSave(vg);
+		nvgIntersectScissor(vg, x, y, w, h);
 		nvgBeginPath(vg);
 		nvgRoundedRectVarying(vg, x, y, w, h, lt, rt, lb, rb);
 		nvgFillColor(vg, color);
 		nvgFill(vg);
+		if (Theme.DEBUG) {
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
+		nvgRestore(vg);
 	}
 
 	@Override
@@ -496,23 +586,63 @@ public class NanoTheme implements ITheme {
 		float scrollBarSize = Variables.SCROLLBAR_SIZE;
 
 		nvgSave(vg);
-		// Scroll bar
+		nvgIntersectScissor(vg, x, y, w, h);
+
+		nvgSave(vg);
+		nvgIntersectScissor(vg, x + w - scrollBarSize, y + scrollBarSize, scrollBarSize, h - scrollBarSize * 2f);
 		nvgBeginPath(vg);
 		nvgRect(vg, x + w - scrollBarSize, y + scrollBarSize, scrollBarSize, h - scrollBarSize * 2f);
 		nvgFillColor(vg, Theme.rgba(128, 128, 128, 140, colorB));
 		nvgFill(vg);
 
+		if (Theme.DEBUG) {
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
+		nvgRestore(vg);
+
+		nvgSave(vg);
+		nvgIntersectScissor(vg, x + w - scrollBarSize, y + scrollBarSize + pos * (h - scrollBarSize * 2f - sizeV),
+				scrollBarSize, sizeV);
 		nvgBeginPath(vg);
 		nvgRect(vg, x + w - scrollBarSize, y + scrollBarSize + pos * (h - scrollBarSize * 2f - sizeV), scrollBarSize,
 				sizeV);
 		nvgFillColor(vg, Theme.rgba(220, 220, 220, 255, colorB));
 		nvgFill(vg);
+		if (Theme.DEBUG) {
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
+		nvgRestore(vg);
 
+		nvgSave(vg);
+		nvgIntersectScissor(vg, x + w - scrollBarSize, y, scrollBarSize, scrollBarSize);
 		nvgBeginPath(vg);
 		nvgRect(vg, x + w - scrollBarSize, y, scrollBarSize, scrollBarSize);
+		nvgFillColor(vg, Theme.rgba(80, 80, 80, 140, colorB));
+		nvgFill(vg);
+		if (Theme.DEBUG) {
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
+		nvgRestore(vg);
+
+		nvgSave(vg);
+		nvgIntersectScissor(vg, x + w - scrollBarSize, y + h - scrollBarSize, scrollBarSize, scrollBarSize);
+		nvgBeginPath(vg);
 		nvgRect(vg, x + w - scrollBarSize, y + h - scrollBarSize, scrollBarSize, scrollBarSize);
 		nvgFillColor(vg, Theme.rgba(80, 80, 80, 140, colorB));
 		nvgFill(vg);
+
+		if (Theme.DEBUG) {
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
+		nvgRestore(vg);
 
 		nvgBeginPath(vg);
 		nvgMoveTo(vg, x + w - scrollBarSize / 2 - 6, y + scrollBarSize / 2 + 4);

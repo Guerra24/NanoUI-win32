@@ -21,7 +21,7 @@
 package net.luxvacuos.nanoui.ui;
 
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_LEFT;
-import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_MIDDLE;
+import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_BOTTOM;
 
 import org.lwjgl.nanovg.NVGColor;
 
@@ -30,7 +30,7 @@ import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 
 public class Text extends Component {
 	protected String text, font = "Segoe UI";
-	protected int align = NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE;
+	protected int align = NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM;
 	protected float fontSize = 17;
 	protected NVGColor color = Theme.rgba(255, 255, 255, 255, NVGColor.create());
 

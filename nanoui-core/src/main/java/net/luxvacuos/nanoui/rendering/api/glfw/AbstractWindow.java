@@ -85,6 +85,8 @@ public abstract class AbstractWindow implements IWindow {
 	protected double lastLoopTime;
 	protected float timeCount;
 
+	protected OnRefresh onRefresh;
+
 	protected GLFWWindowSizeCallback windowSizeCallback;
 	protected GLFWWindowPosCallback windowPosCallback;
 	protected GLFWWindowRefreshCallback windowRefreshCallback;
@@ -105,16 +107,10 @@ public abstract class AbstractWindow implements IWindow {
 	protected void setCallbacks() {
 		this.kbHandle = new KeyboardHandler(this.windowID);
 		this.mHandle = new MouseHandler(this.windowID, this);
-		
+
 		windowSizeCallback = new GLFWWindowSizeCallback() {
 			@Override
 			public void invoke(long windowID, int ww, int wh) {
-				int[] w = new int[1];
-				int[] h = new int[1];
-				GLFW.glfwGetFramebufferSize(windowID, w, h);
-				framebufferWidth = w[0];
-				framebufferHeight = h[0];
-
 				width = ww;
 				height = wh;
 				pixelRatio = (float) framebufferWidth / (float) width;
@@ -134,6 +130,8 @@ public abstract class AbstractWindow implements IWindow {
 			@Override
 			public void invoke(long windowID) {
 				dirty = true;
+				if (onRefresh != null)
+					onRefresh.onRefresh(windowID);
 				GLFW.glfwSwapBuffers(windowID);
 			}
 		};
@@ -176,7 +174,7 @@ public abstract class AbstractWindow implements IWindow {
 		else
 			glfwHideWindow(this.windowID);
 	}
-	
+
 	public void setPosition(int x, int y) {
 		glfwSetWindowPos(windowID, x, y);
 	}
@@ -187,6 +185,10 @@ public abstract class AbstractWindow implements IWindow {
 
 	public void setViewport(int x, int y, int width, int height) {
 		glViewport(0, 0, width, height);
+	}
+
+	public void setOnRefresh(OnRefresh onRefresh) {
+		this.onRefresh = onRefresh;
 	}
 
 	@Override
@@ -271,7 +273,7 @@ public abstract class AbstractWindow implements IWindow {
 	public KeyboardHandler getKeyboardHandler() {
 		return this.kbHandle;
 	}
-	
+
 	public MouseHandler getMouseHandler() {
 		return this.mHandle;
 	}

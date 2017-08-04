@@ -58,6 +58,13 @@ public class Theme {
 	public static final NVGColor colorA = NVGColor.create();
 	public static final NVGColor colorB = NVGColor.create();
 	public static final NVGColor colorC = NVGColor.create();
+	
+	public static final boolean DEBUG = false;
+	public static final float DEBUG_STROKE = 2;
+	
+	public static final NVGColor debugA = setColor(1, 0, 0, 1);
+	public static final NVGColor debugB = setColor(0, 1, 0, 1);
+	public static final NVGColor debugC = setColor(0, 0, 1, 1);
 
 	public enum ButtonStyle {
 		CLOSE, MAXIMIZE, MINIMIZE, RESTORE, NONE, LEFT_ARROW, RIGHT_ARROW

@@ -35,7 +35,7 @@ public class TitleBar implements ITitleBar {
 	private float time;
 	private boolean count;
 	private ComponentWindow window;
-	private NVGColor active = Theme.setColor("#000000FF"), inactive = Theme.setColor(0, 0, 0, 1);
+	private NVGColor active = Theme.setColor("#292929FF"), inactive = Theme.setColor(0, 0, 0, 1);
 
 	public TitleBar(ComponentWindow window) {
 		this.window = window;
