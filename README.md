@@ -1,7 +1,7 @@
 # NanoTaskbar
 Custom Taskbar for Win10
 
-![img](https://puu.sh/wPRTl/5004e819cc.gif)
+![img](https://puu.sh/x1eHX/23c614e768.gif)
 
 
 # WIP

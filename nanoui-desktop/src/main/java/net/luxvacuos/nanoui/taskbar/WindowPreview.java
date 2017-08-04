@@ -145,7 +145,8 @@ public class WindowPreview extends AbstractState {
 			SIZE size = new SIZE();
 			DWMapiExt.INSTANCE.DwmQueryThumbnailSourceSize(new INT_PTR(thumbnail.getValue()), size);
 			size.read();
-			float aspect = (float) size.cx / (float) size.cy;
+			float aspectX = (float) size.cx / (float) size.cy;
+			float aspectY = (float) size.cy / (float) size.cx;
 
 			DWM_THUMBNAIL_PROPERTIES props = new DWM_THUMBNAIL_PROPERTIES();
 			props.dwFlags = DWM_TNP.DWM_TNP_VISIBLE | DWM_TNP.DWM_TNP_RECTDESTINATION | DWM_TNP.DWM_TNP_OPACITY;
@@ -154,10 +155,17 @@ public class WindowPreview extends AbstractState {
 			props.opacity = (byte) 0xFF;
 
 			props.rcDestination = new RECT();
-			props.rcDestination.left = 0;
-			props.rcDestination.top = 100 - (int) (200 / aspect / 2);
-			props.rcDestination.right = props.rcDestination.left + 200;
-			props.rcDestination.bottom = props.rcDestination.top + (int) (200 / aspect);
+			if (size.cx > size.cy) {
+				props.rcDestination.left = 10;
+				props.rcDestination.top = 100 - (int) (180 / aspectX / 2);
+				props.rcDestination.right = props.rcDestination.left + 180;
+				props.rcDestination.bottom = props.rcDestination.top + (int) (180 / aspectX);
+			} else {
+				props.rcDestination.left = 100 - (int) (180 / aspectY / 2);
+				props.rcDestination.top = 10;
+				props.rcDestination.right = props.rcDestination.left + (int) (180 / aspectY);
+				props.rcDestination.bottom = props.rcDestination.top + 180;
+			}
 
 			props.write();
 			DWMapiExt.INSTANCE.DwmUpdateThumbnailProperties(new INT_PTR(thumbnail.getValue()), props);
