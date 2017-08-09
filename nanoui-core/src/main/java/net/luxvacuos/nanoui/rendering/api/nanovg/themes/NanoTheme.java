@@ -446,7 +446,7 @@ public class NanoTheme implements ITheme {
 	public void renderToggleButton(long vg, String text, String font, float x, float y, float w, float h,
 			float fontSize, boolean status) {
 		nvgSave(vg);
-
+		nvgIntersectScissor(vg, x, y, w, h);
 		nvgBeginPath(vg);
 		nvgRect(vg, x, y, w, h);
 		if (status)
@@ -473,7 +473,13 @@ public class NanoTheme implements ITheme {
 			nvgRect(vg, x + 5, y + 5, h - 10, h - 10);
 		nvgFillColor(vg, toggleButtonColor);
 		nvgFill(vg);
-
+		if (Theme.DEBUG) {
+			nvgBeginPath(vg);
+			nvgRect(vg, x, y, w, h);
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 	}
 
@@ -577,7 +583,13 @@ public class NanoTheme implements ITheme {
 		nvgRect(vg, x + (pos * w) - 5, y + 1, 10, h - 2);
 		nvgFillColor(vg, Theme.rgba(200, 200, 200, 255, colorB));
 		nvgFill(vg);
-
+		if (Theme.DEBUG) {
+			nvgBeginPath(vg);
+			nvgRect(vg, x, y, w, h);
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 	}
 

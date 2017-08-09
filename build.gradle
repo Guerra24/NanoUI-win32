@@ -52,4 +52,4 @@ project(":nanoui-test") {
 	}
 }
 
-task wrapper(type: Wrapper) { gradleVersion = '4.0.2' }
+task wrapper(type: Wrapper) { gradleVersion = '4.1' }

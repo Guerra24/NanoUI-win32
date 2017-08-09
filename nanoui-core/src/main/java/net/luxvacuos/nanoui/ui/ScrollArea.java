@@ -20,9 +20,9 @@
 
 package net.luxvacuos.nanoui.ui;
 
+import static org.lwjgl.nanovg.NanoVG.nvgIntersectScissor;
 import static org.lwjgl.nanovg.NanoVG.nvgRestore;
 import static org.lwjgl.nanovg.NanoVG.nvgSave;
-import static org.lwjgl.nanovg.NanoVG.nvgScissor;
 
 import net.luxvacuos.nanoui.core.Variables;
 import net.luxvacuos.nanoui.input.MouseHandler;
@@ -55,7 +55,7 @@ public class ScrollArea extends Component {
 				window.getHeight() - rootComponent.rootY - alignedY - h, w, h,
 				Theme.setColor(0.6f, 0.6f, 0.6f, 0f, Theme.colorB), 0, 0, 0, 0);
 		nvgSave(window.getNVGID());
-		nvgScissor(window.getNVGID(), rootComponent.rootX + alignedX,
+		nvgIntersectScissor(window.getNVGID(), rootComponent.rootX + alignedX,
 				window.getHeight() - rootComponent.rootY - alignedY - h, w, h);
 		comp.render(window);
 		nvgRestore(window.getNVGID());

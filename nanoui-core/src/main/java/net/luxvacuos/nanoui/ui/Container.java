@@ -41,19 +41,20 @@ public class Container extends Component {
 
 	@Override
 	public void render(Window window) {
+		long vg = window.getNVGID();
 		nvgSave(window.getNVGID());
-		nvgIntersectScissor(window.getNVGID(), rootComponent.rootX + alignedX,
+		nvgIntersectScissor(vg, rootComponent.rootX + alignedX,
 				window.getHeight() - rootComponent.rootY - alignedY - h, w, h);
 		comp.render(window);
 		if (Theme.DEBUG) {
-			nvgBeginPath(window.getNVGID());
-			nvgRect(window.getNVGID(), rootComponent.rootX + alignedX,
+			nvgBeginPath(vg);
+			nvgRect(vg, rootComponent.rootX + alignedX,
 					window.getHeight() - rootComponent.rootY - alignedY - h, w, h);
-			nvgStrokeWidth(window.getNVGID(), Theme.DEBUG_STROKE);
-			nvgStrokeColor(window.getNVGID(), Theme.debugB);
-			nvgStroke(window.getNVGID());
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
 		}
-		nvgRestore(window.getNVGID());
+		nvgRestore(vg);
 	}
 
 	@Override
