@@ -21,17 +21,19 @@
 package net.luxvacuos.nanoui.test;
 
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
-import static com.sun.jna.platform.win32.WinUser.SWP_NOZORDER;
 import static com.sun.jna.platform.win32.WinUser.SW_MAXIMIZE;
+import static com.sun.jna.platform.win32.WinUser.SWP_NOZORDER;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
+import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_BOTTOM;
+import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_LEFT;
 import static org.lwjgl.system.windows.User32.HTCAPTION;
 import static org.lwjgl.system.windows.User32.HTTOP;
 import static org.lwjgl.system.windows.User32.SWP_FRAMECHANGED;
 import static org.lwjgl.system.windows.User32.SWP_NOMOVE;
 import static org.lwjgl.system.windows.User32.SWP_NOSIZE;
+import static org.lwjgl.system.windows.User32.WM_DWMCOLORIZATIONCOLORCHANGED;
 import static org.lwjgl.system.windows.User32.WM_NCCALCSIZE;
 import static org.lwjgl.system.windows.User32.WM_NCHITTEST;
-import static org.lwjgl.nanovg.NanoVG.*;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
@@ -40,6 +42,10 @@ import org.lwjgl.system.windows.WindowProc;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef.BOOL;
+import com.sun.jna.platform.win32.WinDef.BOOLByReference;
+import com.sun.jna.platform.win32.WinDef.DWORD;
+import com.sun.jna.platform.win32.WinDef.DWORDByReference;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.RECT;
@@ -91,6 +97,14 @@ public class TestApp extends AbstractState {
 			@Override
 			public long invoke(long hw, int uMsg, long wParam, long lParam) {
 				switch (uMsg) {
+				case WM_DWMCOLORIZATIONCOLORCHANGED:
+					DWORD color = new DWORD(wParam);
+					BOOL blend =  new BOOL(lParam);
+					String col = Long.toHexString(color.longValue());
+					String a = col.substring(0, 2);
+					col = col.substring(2);
+					window.getTitlebar().setColor("#" + col + "ff");
+					break;
 				case WM_NCHITTEST:
 					RECT rect = new RECT();
 					int x, y;
@@ -132,6 +146,17 @@ public class TestApp extends AbstractState {
 		User32.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, Pointer.createConstant(proc.address()));
 		User32.INSTANCE.SetWindowPos(hwnd, null, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
+		DWORDByReference color = new DWORDByReference();
+		BOOLByReference blend = new BOOLByReference();
+		DWMapiExt.INSTANCE.DwmGetColorizationColor(color, blend);
+		System.out.println(Long.toHexString(color.getValue().longValue()));
+		System.out.println(blend.getValue().booleanValue());
+
+		String col = Long.toHexString(color.getValue().longValue());
+		String a = col.substring(0, 2);
+		col = col.substring(2);
+		window.getTitlebar().setColor("#" + col + "ff");
+
 		MARGINS margins = new MARGINS();
 
 		margins.cxLeftWidth = 0;
@@ -143,8 +168,9 @@ public class TestApp extends AbstractState {
 		Container center = new Container(0, 0, 200, 250);
 		center.setAlignment(Alignment.CENTER);
 		center.setWindowAlignment(Alignment.CENTER);
-		
-		Image logo = new Image(0, 0, 170.6666666666667f, 85.33333333333333f, AppUI.getMainWindow().getResourceLoader().loadNVGTexture("logo"), true);
+
+		Image logo = new Image(0, 0, 170.6666666666667f, 85.33333333333333f,
+				AppUI.getMainWindow().getResourceLoader().loadNVGTexture("logo"), true);
 		logo.setAlignment(Alignment.BOTTOM);
 		logo.setWindowAlignment(Alignment.TOP);
 		center.addComponent(logo);

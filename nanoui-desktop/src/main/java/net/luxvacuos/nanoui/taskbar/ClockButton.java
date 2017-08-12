@@ -20,17 +20,14 @@
 
 package net.luxvacuos.nanoui.taskbar;
 
-import static org.lwjgl.nanovg.NanoVG.*;
+import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_BOTTOM;
+import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_CENTER;
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_TOP;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-
-import javax.swing.Timer;
 
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
@@ -39,24 +36,29 @@ import net.luxvacuos.nanoui.ui.Button;
 public class ClockButton extends Button {
 
 	private String clock = "", date = "";
+	private boolean running = true;
 
 	public ClockButton(float x, float y, float w, float h) {
 		super(x, y, w, h, "");
 		final DateFormat clockFormat = new SimpleDateFormat("h:mm a");
 		final DateFormat dateFormat = new SimpleDateFormat("MM/dd/YYYY");
-		int interval = 1000; // 1000
-
-		new Timer(interval, new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+		Thread clock = new Thread(() -> {
+			while (running) {
 				Date now = Calendar.getInstance().getTime();
-				clock = clockFormat.format(now);
-				date = dateFormat.format(now);
+				this.clock = clockFormat.format(now);
+				this.date = dateFormat.format(now);
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
 			}
-		}).start();
+		});
+		clock.setName("Clock Thread");
+		clock.start();
 		Date now = Calendar.getInstance().getTime();
-		clock = clockFormat.format(now);
-		date = dateFormat.format(now);
+		this.clock = clockFormat.format(now);
+		this.date = dateFormat.format(now);
 	}
 
 	@Override
@@ -72,6 +74,12 @@ public class ClockButton extends Button {
 				rootComponent.rootX + alignedX + w / 2f,
 				window.getHeight() - rootComponent.rootY - alignedY - h / 2f - 2f, fontSize,
 				Theme.rgba(255, 255, 255, 255, Theme.colorA));
+	}
+
+	@Override
+	public void dispose(Window window) {
+		super.dispose(window);
+		running = false;
 	}
 
 }

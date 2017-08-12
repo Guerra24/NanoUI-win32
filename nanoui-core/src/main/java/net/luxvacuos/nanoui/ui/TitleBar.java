@@ -155,5 +155,12 @@ public class TitleBar implements ITitleBar {
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
 	}
+	
+	public void setColor(String hex) {
+		active.r(Integer.valueOf(hex.substring(1, 3), 16) / 255f);
+		active.g(Integer.valueOf(hex.substring(3, 5), 16) / 255f);
+		active.b(Integer.valueOf(hex.substring(5, 7), 16) / 255f);
+		active.a(Integer.valueOf(hex.substring(7, 9), 16) / 255f);
+	}
 
 }

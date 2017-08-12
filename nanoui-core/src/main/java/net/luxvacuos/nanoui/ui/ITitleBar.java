@@ -50,5 +50,7 @@ public interface ITitleBar {
 	public boolean isInside(Window window, int x, int y);
 
 	public void setEnabled(boolean enabled);
+	
+	public void setColor(String hex);
 
 }

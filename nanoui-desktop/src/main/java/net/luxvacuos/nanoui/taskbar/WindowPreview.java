@@ -156,15 +156,15 @@ public class WindowPreview extends AbstractState {
 
 			props.rcDestination = new RECT();
 			if (size.cx > size.cy) {
-				props.rcDestination.left = 10;
-				props.rcDestination.top = 100 - (int) (180 / aspectX / 2);
-				props.rcDestination.right = props.rcDestination.left + 180;
-				props.rcDestination.bottom = props.rcDestination.top + (int) (180 / aspectX);
+				props.rcDestination.left = 5;
+				props.rcDestination.top = 100 - (int) (190 / aspectX / 2);
+				props.rcDestination.right = props.rcDestination.left + 190;
+				props.rcDestination.bottom = props.rcDestination.top + (int) (190 / aspectX);
 			} else {
-				props.rcDestination.left = 100 - (int) (180 / aspectY / 2);
-				props.rcDestination.top = 10;
-				props.rcDestination.right = props.rcDestination.left + (int) (180 / aspectY);
-				props.rcDestination.bottom = props.rcDestination.top + 180;
+				props.rcDestination.left = 100 - (int) (190 / aspectY / 2);
+				props.rcDestination.top = 5;
+				props.rcDestination.right = props.rcDestination.left + (int) (190 / aspectY);
+				props.rcDestination.bottom = props.rcDestination.top + 190;
 			}
 
 			props.write();

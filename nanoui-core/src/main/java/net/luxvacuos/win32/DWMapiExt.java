@@ -24,6 +24,8 @@ import java.util.List;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
+import com.sun.jna.platform.win32.WinDef.BOOLByReference;
+import com.sun.jna.platform.win32.WinDef.DWORDByReference;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.INT_PTR;
 import com.sun.jna.platform.win32.WinDef.RECT;
@@ -138,5 +140,7 @@ public interface DWMapiExt extends StdCallLibrary {
 	public HRESULT DwmQueryThumbnailSourceSize(INT_PTR hThumbnail, SIZE size);
 
 	public HRESULT DwmUpdateThumbnailProperties(INT_PTR hThumbnailId, DWM_THUMBNAIL_PROPERTIES ptnProperties);
+	
+	public HRESULT DwmGetColorizationColor(DWORDByReference color, BOOLByReference pfOpaqueBlend);
 
 }

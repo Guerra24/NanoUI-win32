@@ -114,8 +114,8 @@ public class ComponentWindow {
 			rootComponent.alwaysUpdate(delta, window, 0, window.getHeight() - Variables.TITLEBAR_HEIGHT - 1,
 					window.getWidth(), window.getHeight() - Variables.TITLEBAR_HEIGHT - 1);
 		else
-			rootComponent.alwaysUpdate(delta, window, 0, window.getHeight() - Variables.TITLEBAR_HEIGHT,
-					window.getWidth(), window.getHeight() - Variables.TITLEBAR_HEIGHT);
+			rootComponent.alwaysUpdate(delta, window, 0, window.getHeight(),
+					window.getWidth(), window.getHeight());
 	}
 
 	public void dispose(Window window) {

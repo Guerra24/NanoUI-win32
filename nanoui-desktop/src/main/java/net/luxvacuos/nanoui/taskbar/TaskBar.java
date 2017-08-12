@@ -123,6 +123,8 @@ public class TaskBar extends AbstractState {
 	@Override
 	public void init() {
 		super.init();
+		
+		Thread.currentThread().setName("Taskbar");
 		Theme.setTheme(new TaskBarTheme());
 
 		IGNORE_WINDOWS.add("Program Manager");
@@ -323,7 +325,7 @@ public class TaskBar extends AbstractState {
 		startBtns.addComponent(search);
 		startBtns.addComponent(taskview);
 
-		tasks = new Container(0, 0, Variables.WIDTH - 320, Variables.HEIGHT);
+		tasks = new Container(0, 0, Variables.WIDTH - 248, Variables.HEIGHT);
 		tasks.setLayout(new FlowLayout(Direction.RIGHT, 0, 0));
 		User32Ext.INSTANCE.EnumWindows(new WNDENUMPROC() {
 			@Override
@@ -366,7 +368,7 @@ public class TaskBar extends AbstractState {
 			}
 		}, null);
 
-		Container rightBtns = new Container(0, 0, 200, Variables.HEIGHT);
+		Container rightBtns = new Container(0, 0, 128, Variables.HEIGHT);
 		rightBtns.setLayout(new FlowLayout(Direction.LEFT, 0, 0));
 
 		Button minimizeAll = new Button(0, 0, 5, Variables.HEIGHT, "");
@@ -458,6 +460,7 @@ public class TaskBar extends AbstractState {
 			previewWindow.dispose();
 			window.dispose();
 		});
+		prevThr.setName("Preview Thread");
 		prevThr.start();
 	}
 
@@ -496,6 +499,7 @@ public class TaskBar extends AbstractState {
 			contextWindow.dispose();
 			window.dispose();
 		});
+		contxThr.setName("Context Thread");
 		contxThr.start();
 	}
 
