@@ -131,6 +131,7 @@ public class TaskBar extends AbstractState {
 		IGNORE_WINDOWS.add("Windows Shell Experience Host");
 		IGNORE_WINDOWS.add("Date and Time Information");
 		IGNORE_WINDOWS.add("Windows Ink Workspace");
+		IGNORE_WINDOWS.add("ShareX - Region capture");
 
 		window = new ComponentWindow(AppUI.getMainWindow());
 		window.getTitlebar().setEnabled(false);
