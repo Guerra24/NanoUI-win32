@@ -20,6 +20,8 @@
 
 package net.luxvacuos.nanoui.taskbar;
 
+import static org.lwjgl.nanovg.NanoVG.nvgDeleteImage;
+
 import com.sun.jna.platform.win32.WinDef.HWND;
 
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
@@ -59,7 +61,7 @@ public class WindowButton extends Button {
 		if (!enabled)
 			return;
 		super.update(delta, window);
-		if(pressed || pressedRight)
+		if (pressed || pressedRight)
 			hover = true;
 		if (insideButton(window.getMouseHandler()) && !hover) {
 			timer += delta * 2f;
@@ -70,13 +72,24 @@ public class WindowButton extends Button {
 		} else {
 			timer = 0;
 		}
-		if(!insideButton(window.getMouseHandler())) {
+		if (!insideButton(window.getMouseHandler())) {
 			hover = false;
 		}
 	}
 
+	@Override
+	public void dispose(Window window) {
+		if (icon != -1)
+			nvgDeleteImage(window.getNVGID(), icon);
+		super.dispose(window);
+	}
+
 	public void reDraw(HWND hwnd, Window window) {
 		this.hwnd = hwnd;
+		if (icon != -1) {
+			nvgDeleteImage(window.getNVGID(), icon);
+			icon = -1;
+		}
 		if (icon == -1)
 			icon = Util.getIcon(hwnd, window);
 	}

@@ -123,13 +123,14 @@ public class TaskBar extends AbstractState {
 	@Override
 	public void init() {
 		super.init();
-		
+
 		Thread.currentThread().setName("Taskbar");
 		Theme.setTheme(new TaskBarTheme());
 
 		IGNORE_WINDOWS.add("Program Manager");
 		IGNORE_WINDOWS.add("Windows Shell Experience Host");
 		IGNORE_WINDOWS.add("Date and Time Information");
+		IGNORE_WINDOWS.add("Windows Ink Workspace");
 
 		window = new ComponentWindow(AppUI.getMainWindow());
 		window.getTitlebar().setEnabled(false);
@@ -178,7 +179,8 @@ public class TaskBar extends AbstractState {
 					case HSHELL.HSHELL_WINDOWCREATED:
 						if (User32.INSTANCE.IsWindowVisible(hwndD))
 							if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
-								if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
+								if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)
+										&& !windows.containsKey(hwndD)) {
 									WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
 									btn.setOnButtonPress(() -> {
 										if (btn.active) {
@@ -240,6 +242,14 @@ public class TaskBar extends AbstractState {
 							info.write();
 						}
 						return 1;
+					case HSHELL.HSHELL_WINDOWFULLSCREEN:
+						if (!IGNORE_WINDOWS.contains(title))
+							AppUI.getMainWindow().setVisible(false);
+						return 1;
+					case HSHELL.HSHELL_WINDOWNORMAL:
+						if (!IGNORE_WINDOWS.contains(title))
+							AppUI.getMainWindow().setVisible(true);
+						return 1;
 					}
 				}
 				switch (uMsg) {
@@ -285,10 +295,11 @@ public class TaskBar extends AbstractState {
 		old.left = info.rcWork.left;
 
 		RECT rc = new RECT();
-		rc.top = info.rcWork.top;
-		rc.bottom = info.rcWork.bottom;
-		rc.right = info.rcWork.right;
-		rc.left = info.rcWork.left;
+		rc.top = info.rcMonitor.top;
+		rc.bottom = info.rcMonitor.bottom - 40;
+		rc.right = info.rcMonitor.right;
+		rc.left = info.rcMonitor.left;
+		rc.write();
 		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, rc.getPointer(), 0);
 
 		Container startBtns = new Container(0, 0, 120, Variables.HEIGHT);
@@ -335,7 +346,7 @@ public class TaskBar extends AbstractState {
 					User32Ext.INSTANCE.GetWindowTextW(hwndD, buffer, buffer.length);
 					String title = Native.toString(buffer);
 					if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
-						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
+						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title) && !windows.containsKey(hwndD)) {
 							WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
 							btn.setOnButtonPress(() -> {
 								if (btn.active) {
@@ -454,7 +465,8 @@ public class TaskBar extends AbstractState {
 					accumulator -= interval;
 				}
 				alpha = accumulator / interval;
-				previewWindow.render(alpha);
+				if (window.isVisible())
+					previewWindow.render(alpha);
 				window.updateDisplay(fps);
 			}
 			previewWindow.dispose();
@@ -493,7 +505,8 @@ public class TaskBar extends AbstractState {
 					accumulator -= interval;
 				}
 				alpha = accumulator / interval;
-				contextWindow.render(alpha);
+				if (window.isVisible())
+					contextWindow.render(alpha);
 				window.updateDisplay(fps);
 			}
 			contextWindow.dispose();
@@ -533,7 +546,8 @@ public class TaskBar extends AbstractState {
 					accumulator -= interval;
 				}
 				alpha = accumulator / interval;
-				backgroundWindow.render(alpha);
+				if (window.isVisible())
+					backgroundWindow.render(alpha);
 				window.updateDisplay(fps);
 			}
 			backgroundWindow.dispose();

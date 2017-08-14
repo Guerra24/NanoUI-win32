@@ -31,8 +31,6 @@
  */
 package net.luxvacuos.nanoui.rendering.api.glfw;
 
-import org.lwjgl.glfw.GLFW;
-
 /**
  * A highly accurate sync method that continually adapts to the system it runs
  * on to provide reliable results.
@@ -89,13 +87,8 @@ public class Sync {
 		nextFrame = getTime();
 	}
 
-	/**
-	 * Get the system time in nano seconds
-	 * 
-	 * @return will return the current time in nano's
-	 */
 	private static long getTime() {
-		return ((long) (GLFW.glfwGetTime() * 1000) * NANOS_IN_SECOND) / 1000;
+		return System.nanoTime();
 	}
 
 	private class RunningAvg {

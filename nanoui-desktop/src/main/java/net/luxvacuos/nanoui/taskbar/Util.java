@@ -82,6 +82,7 @@ public class Util {
 					image = (BufferedImage) ((ImageIcon) icon).getImage();
 				}
 			}
+
 		if (image == null) {
 			long iconHandle = User32Ext.INSTANCE.SendMessage(hwnd, WM_GETICON, new WPARAM(ICON_SMALL2), new LPARAM())
 					.longValue();

@@ -66,6 +66,8 @@ public interface User32Ext extends StdCallLibrary {
 		public static final int HSHELL_LANGUAGE = 8;
 		public static final int HSHELL_ACCESSIBILITYSTATE = 11;
 		public static final int HSHELL_APPCOMMAND = 12;
+		public static final int HSHELL_WINDOWFULLSCREEN = 53;
+		public static final int HSHELL_WINDOWNORMAL = 54;
 	}
 
 	public interface ARW {
@@ -207,5 +209,7 @@ public interface User32Ext extends StdCallLibrary {
 	public boolean SendNotifyMessage(HWND hwnd, int msg, WPARAM wParam, LPARAM lParam);
 
 	public boolean ShowWindowAsync(HWND hwnd, int msg);
+
+	public HWND GetShellWindow();
 
 }
