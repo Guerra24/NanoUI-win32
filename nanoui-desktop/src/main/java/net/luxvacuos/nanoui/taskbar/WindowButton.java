@@ -86,10 +86,6 @@ public class WindowButton extends Button {
 
 	public void reDraw(HWND hwnd, Window window) {
 		this.hwnd = hwnd;
-		if (icon != -1) {
-			nvgDeleteImage(window.getNVGID(), icon);
-			icon = -1;
-		}
 		if (icon == -1)
 			icon = Util.getIcon(hwnd, window);
 	}
