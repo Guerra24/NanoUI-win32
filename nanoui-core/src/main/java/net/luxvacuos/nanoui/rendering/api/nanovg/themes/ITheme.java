@@ -25,7 +25,7 @@ import org.lwjgl.nanovg.NVGColor;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme.ButtonStyle;
 
 public interface ITheme {
-	
+
 	public void renderTitlebar(long vg, float w, NVGColor color);
 
 	public float renderTitleBarText(long vg, String text, String font, int align, float x, float y, float fontSize);
@@ -69,6 +69,6 @@ public interface ITheme {
 			String entypo, String text, boolean inside);
 
 	public void renderTaskbarWindowButton(long vg, String preicon, String text, String font, String entypo, float x,
-			float y, float w, float h, boolean highlight, boolean active, float fontSize);
+			float y, float w, float h, boolean highlight, boolean active, boolean flash, float fontSize);
 
 }

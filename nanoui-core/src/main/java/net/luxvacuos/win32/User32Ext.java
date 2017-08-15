@@ -30,6 +30,7 @@ import com.sun.jna.platform.win32.WinDef.LRESULT;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.platform.win32.WinUser;
+import com.sun.jna.platform.win32.WinUser.HOOKPROC;
 import com.sun.jna.platform.win32.WinUser.WINDOWPLACEMENT;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
@@ -161,6 +162,12 @@ public interface User32Ext extends StdCallLibrary {
 			return FIELDS;
 		}
 	}
+
+	public interface CALLWNDPROC extends HOOKPROC {
+		public LRESULT HookCallback(int code, WPARAM wParam, LPARAM lParam);
+	}
+
+	public static final int WH_CALLWNDPROC = 4;
 
 	public static final int MAX_PATH = 260;
 

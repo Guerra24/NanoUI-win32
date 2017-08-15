@@ -90,6 +90,7 @@ public class NanoTheme implements ITheme {
 	protected NVGColor titleBarButtonColor = Theme.setColor("#00000000"),
 			titleBarButtonHighlight = Theme.setColor("#444444FF"),
 			titleBarButtonCloseHighlight = Theme.setColor("#E81123FF");
+	protected NVGColor flashColor = Theme.setColor("#F48642FF");
 
 	public NanoTheme() {
 	}
@@ -700,7 +701,7 @@ public class NanoTheme implements ITheme {
 
 	@Override
 	public void renderTaskbarWindowButton(long vg, String preicon, String text, String font, String entypo, float x,
-			float y, float w, float h, boolean highlight, boolean active, float fontSize) {
+			float y, float w, float h, boolean highlight, boolean active, boolean flash, float fontSize) {
 		float tw, iw = 0;
 		nvgSave(vg);
 
@@ -711,6 +712,13 @@ public class NanoTheme implements ITheme {
 		else
 			nvgFillColor(vg, buttonColor);
 		nvgFill(vg);
+		
+		if (flash) {
+			nvgBeginPath(vg);
+			nvgRect(vg, x + 1, y + 1, w - 2, h - 2);
+			nvgFillColor(vg, flashColor);
+			nvgFill(vg);
+		}
 
 		nvgBeginPath(vg);
 		nvgRect(vg, x + 1, y + h - 4, w - 2, 3);

@@ -149,8 +149,6 @@ public class TestApp extends AbstractState {
 		DWORDByReference color = new DWORDByReference();
 		BOOLByReference blend = new BOOLByReference();
 		DWMapiExt.INSTANCE.DwmGetColorizationColor(color, blend);
-		System.out.println(Long.toHexString(color.getValue().longValue()));
-		System.out.println(blend.getValue().booleanValue());
 
 		String col = Long.toHexString(color.getValue().longValue());
 		String a = col.substring(0, 2);

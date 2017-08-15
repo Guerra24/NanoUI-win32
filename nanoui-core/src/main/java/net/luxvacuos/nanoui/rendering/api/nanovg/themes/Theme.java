@@ -58,10 +58,10 @@ public class Theme {
 	public static final NVGColor colorA = NVGColor.create();
 	public static final NVGColor colorB = NVGColor.create();
 	public static final NVGColor colorC = NVGColor.create();
-	
+
 	public static final boolean DEBUG = false;
 	public static final float DEBUG_STROKE = 2;
-	
+
 	public static final NVGColor debugA = setColor(1, 0, 0, 1);
 	public static final NVGColor debugB = setColor(0, 1, 0, 1);
 	public static final NVGColor debugC = setColor(0, 0, 1, 1);
@@ -195,8 +195,8 @@ public class Theme {
 	}
 
 	public static void renderTaskbarWindowButton(long vg, String preicon, String text, String font, String entypo,
-			float x, float y, float w, float h, boolean inside, boolean active, float fontSize) {
-		theme.renderTaskbarWindowButton(vg, preicon, text, font, entypo, x, y, w, h, inside, active, fontSize);
+			float x, float y, float w, float h, boolean inside, boolean active, boolean flash, float fontSize) {
+		theme.renderTaskbarWindowButton(vg, preicon, text, font, entypo, x, y, w, h, inside, active, flash, fontSize);
 
 	}
 

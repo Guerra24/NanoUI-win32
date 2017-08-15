@@ -33,6 +33,7 @@ import static com.sun.jna.platform.win32.WinUser.SW_SHOW;
 import static com.sun.jna.platform.win32.WinUser.WM_HOTKEY;
 import static com.sun.jna.platform.win32.WinUser.WM_QUIT;
 import static net.luxvacuos.win32.User32Ext.VK_E;
+import static net.luxvacuos.win32.User32Ext.WH_CALLWNDPROC;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
 import static org.lwjgl.system.windows.User32.WM_COPYDATA;
 import static org.lwjgl.system.windows.User32.WS_EX_TOOLWINDOW;
@@ -53,16 +54,21 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef.HMODULE;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
+import com.sun.jna.platform.win32.WinDef.LRESULT;
 import com.sun.jna.platform.win32.WinDef.RECT;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinUser;
+import com.sun.jna.platform.win32.WinUser.HHOOK;
 import com.sun.jna.platform.win32.WinUser.HMONITOR;
+import com.sun.jna.platform.win32.WinUser.HOOKPROC;
 import com.sun.jna.platform.win32.WinUser.MONITORINFO;
 import com.sun.jna.platform.win32.WinUser.MSG;
 import com.sun.jna.platform.win32.WinUser.WINDOWPLACEMENT;
 import com.sun.jna.platform.win32.WinUser.WNDENUMPROC;
+import com.sun.jna.ptr.IntByReference;
 
 import net.luxvacuos.nanoui.bootstrap.Bootstrap;
 import net.luxvacuos.nanoui.core.App;
@@ -87,6 +93,7 @@ import net.luxvacuos.win32.User32Ext;
 import net.luxvacuos.win32.User32Ext.ARW;
 import net.luxvacuos.win32.User32Ext.Accent;
 import net.luxvacuos.win32.User32Ext.AccentPolicy;
+import net.luxvacuos.win32.User32Ext.CALLWNDPROC;
 import net.luxvacuos.win32.User32Ext.HSHELL;
 import net.luxvacuos.win32.User32Ext.MINIMIZEDMETRICS;
 import net.luxvacuos.win32.User32Ext.SHELLHOOKINFO;
@@ -111,6 +118,8 @@ public class TaskBar extends AbstractState {
 	private boolean running = true;
 
 	private int keysThreadID;
+
+	// private HHOOK notifyHook;
 
 	private HWND taskbar;
 
@@ -165,6 +174,7 @@ public class TaskBar extends AbstractState {
 			User32Ext.INSTANCE.RegisterShellHookWindow(hwnd);
 			msgNotify = 49195;
 		}
+
 		long dwp = User32Ext.INSTANCE.GetWindowLongPtr(hwnd, GWL_WNDPROC);
 
 		WindowProc proc = new WindowProc() {
@@ -270,6 +280,21 @@ public class TaskBar extends AbstractState {
 		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, proc.address());
 		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
 
+		/*
+		 * CALLWNDPROC winproc = new CALLWNDPROC() {
+		 * 
+		 * @Override public LRESULT HookCallback(int nCode, WPARAM wParam, LPARAM
+		 * lParam) { System.out.println("AA"); return
+		 * User32.INSTANCE.CallNextHookEx(null, nCode, wParam, lParam); } };
+		 */
+		// IntByReference shellThread = new IntByReference();
+		// User32.INSTANCE.GetWindowThreadProcessId(taskbar, shellThread);
+
+		// HMODULE hMod = Kernel32.INSTANCE.GetModuleHandle(null);
+
+		// notifyHook = User32.INSTANCE.SetWindowsHookEx(WH_CALLWNDPROC, winproc, hMod,
+		// shellThread.getValue());
+
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
 		accent.GradientColor = 0xBE282828;
@@ -370,13 +395,13 @@ public class TaskBar extends AbstractState {
 							});
 							btn.setOnButtonRightPress(() -> {
 								GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-								contextWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
 								contextWindow.setHwnd(hwndD);
+								contextWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
 							});
 							btn.setOnHover(() -> {
 								GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-								previewWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
 								previewWindow.setHwnd(hwndD);
+								previewWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
 							});
 							btn.reDraw(hwndD, AppUI.getMainWindow());
 							tasks.addComponent(btn);
@@ -592,6 +617,7 @@ public class TaskBar extends AbstractState {
 		super.dispose();
 		window.dispose(AppUI.getMainWindow());
 		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, old.getPointer(), 0);
+		// User32.INSTANCE.UnhookWindowsHookEx(notifyHook);
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
 		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
 		User32Ext.INSTANCE.DeregisterShellHookWindow(hwnd);
@@ -602,7 +628,6 @@ public class TaskBar extends AbstractState {
 		} else {
 			if (taskbar != null)
 				User32.INSTANCE.ShowWindow(taskbar, SW_SHOW);
-
 		}
 	}
 

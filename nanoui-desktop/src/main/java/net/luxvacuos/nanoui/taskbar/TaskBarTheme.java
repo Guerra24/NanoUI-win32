@@ -96,7 +96,7 @@ public class TaskBarTheme extends NanoTheme {
 
 	@Override
 	public void renderTaskbarWindowButton(long vg, String preicon, String text, String font, String entypo, float x,
-			float y, float w, float h, boolean highlight, boolean active, float fontSize) {
+			float y, float w, float h, boolean highlight, boolean active, boolean flash, float fontSize) {
 		float tw, iw = 0;
 		nvgSave(vg);
 
@@ -108,13 +108,20 @@ public class TaskBarTheme extends NanoTheme {
 			nvgFillColor(vg, buttonColor);
 		nvgFill(vg);
 		
+		if (flash) {
+			nvgBeginPath(vg);
+			nvgRect(vg, x, y, w , h);
+			nvgFillColor(vg, flashColor);
+			nvgFill(vg);
+		}
+		
 		if (active) {
 			nvgBeginPath(vg);
 			nvgRect(vg, x, y + h - 3, w, 3);
 			nvgFillColor(vg, Theme.rgba(255, 255, 255, 255, colorA));
 			nvgFill(vg);
 		}
-
+		
 		nvgFontSize(vg, fontSize);
 		nvgFontFace(vg, font);
 		tw = nvgTextBounds(vg, 0, 0, text, (FloatBuffer) null);

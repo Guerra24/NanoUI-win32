@@ -22,8 +22,6 @@ package net.luxvacuos.nanoui.taskbar;
 
 import static org.lwjgl.nanovg.NanoVG.nvgDeleteImage;
 
-import org.lwjgl.nanovg.NVGColor;
-
 import com.sun.jna.platform.win32.WinDef.HWND;
 
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
@@ -34,7 +32,6 @@ import net.luxvacuos.nanoui.ui.OnAction;
 public class WindowButton extends Button {
 
 	private static final float FLASH_TIMER = 0.5f;
-	private static final NVGColor FLASH_COLOR = Theme.setColor("#F48642FF");
 
 	private HWND hwnd;
 	protected boolean active = false;
@@ -54,11 +51,8 @@ public class WindowButton extends Button {
 	public void render(Window window) {
 		if (!enabled)
 			return;
-		if (flash)
-			Theme.renderBox(window.getNVGID(), rootComponent.rootX + alignedX,
-					window.getHeight() - rootComponent.rootY - alignedY - h, w, h, FLASH_COLOR, 0, 0, 0, 0);
 		Theme.renderTaskbarWindowButton(window.getNVGID(), preicon, text, font, entypo, rootComponent.rootX + alignedX,
-				window.getHeight() - rootComponent.rootY - alignedY - h, w, h, inside, active, fontSize);
+				window.getHeight() - rootComponent.rootY - alignedY - h, w, h, inside, active, flash, fontSize);
 		if (icon != -1)
 			Theme.renderImage(window.getNVGID(), rootComponent.rootX + alignedX + h * 0.30f,
 					window.getHeight() - rootComponent.rootY - alignedY - h + h * 0.25f, h * 0.50f, h * 0.50f, icon,
@@ -84,9 +78,9 @@ public class WindowButton extends Button {
 		if (!insideButton(window.getMouseHandler())) {
 			hover = false;
 		}
-		if(flash) {
+		if (flash) {
 			flashTimer += delta;
-			if(flashTimer > FLASH_TIMER) {
+			if (flashTimer > FLASH_TIMER) {
 				flash = false;
 				flashTimer = 0;
 			}
