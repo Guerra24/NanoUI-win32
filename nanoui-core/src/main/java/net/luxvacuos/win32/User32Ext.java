@@ -66,6 +66,8 @@ public interface User32Ext extends StdCallLibrary {
 		public static final int HSHELL_LANGUAGE = 8;
 		public static final int HSHELL_ACCESSIBILITYSTATE = 11;
 		public static final int HSHELL_APPCOMMAND = 12;
+		public static final int HSHELL_HIGHBIT = 0x8000;
+		public static final int HSHELL_FLASH = (HSHELL_REDRAW | HSHELL_HIGHBIT);
 		public static final int HSHELL_WINDOWFULLSCREEN = 53;
 		public static final int HSHELL_WINDOWNORMAL = 54;
 	}

@@ -132,6 +132,7 @@ public class TaskBar extends AbstractState {
 		IGNORE_WINDOWS.add("Date and Time Information");
 		IGNORE_WINDOWS.add("Windows Ink Workspace");
 		IGNORE_WINDOWS.add("ShareX - Region capture");
+		IGNORE_WINDOWS.add("ShareX - Screen recording");
 
 		window = new ComponentWindow(AppUI.getMainWindow());
 		window.getTitlebar().setEnabled(false);
@@ -244,12 +245,18 @@ public class TaskBar extends AbstractState {
 						}
 						return 1;
 					case HSHELL.HSHELL_WINDOWFULLSCREEN:
-						if (!IGNORE_WINDOWS.contains(title))
+						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title))
 							AppUI.getMainWindow().setVisible(false);
 						return 1;
 					case HSHELL.HSHELL_WINDOWNORMAL:
-						if (!IGNORE_WINDOWS.contains(title))
+						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title))
 							AppUI.getMainWindow().setVisible(true);
+						return 1;
+					case HSHELL.HSHELL_FLASH:
+						WindowButton btnF = windows.get(hwndD);
+						if (btnF != null) {
+							btnF.flash();
+						}
 						return 1;
 					}
 				}

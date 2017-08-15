@@ -22,6 +22,8 @@ package net.luxvacuos.nanoui.taskbar;
 
 import static org.lwjgl.nanovg.NanoVG.nvgDeleteImage;
 
+import org.lwjgl.nanovg.NVGColor;
+
 import com.sun.jna.platform.win32.WinDef.HWND;
 
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
@@ -31,12 +33,17 @@ import net.luxvacuos.nanoui.ui.OnAction;
 
 public class WindowButton extends Button {
 
+	private static final float FLASH_TIMER = 0.5f;
+	private static final NVGColor FLASH_COLOR = Theme.setColor("#F48642FF");
+
 	private HWND hwnd;
 	protected boolean active = false;
 	private int icon = -1;
 	private OnAction onHover;
 	private float timer;
 	private boolean hover = false;
+	private boolean flash;
+	private float flashTimer;
 
 	public WindowButton(float x, float y, float w, float h, String text, HWND hwnd) {
 		super(x, y, w, h, text);
@@ -47,13 +54,15 @@ public class WindowButton extends Button {
 	public void render(Window window) {
 		if (!enabled)
 			return;
+		if (flash)
+			Theme.renderBox(window.getNVGID(), rootComponent.rootX + alignedX,
+					window.getHeight() - rootComponent.rootY - alignedY - h, w, h, FLASH_COLOR, 0, 0, 0, 0);
 		Theme.renderTaskbarWindowButton(window.getNVGID(), preicon, text, font, entypo, rootComponent.rootX + alignedX,
 				window.getHeight() - rootComponent.rootY - alignedY - h, w, h, inside, active, fontSize);
 		if (icon != -1)
 			Theme.renderImage(window.getNVGID(), rootComponent.rootX + alignedX + h * 0.30f,
 					window.getHeight() - rootComponent.rootY - alignedY - h + h * 0.25f, h * 0.50f, h * 0.50f, icon,
 					1f);
-
 	}
 
 	@Override
@@ -75,6 +84,13 @@ public class WindowButton extends Button {
 		if (!insideButton(window.getMouseHandler())) {
 			hover = false;
 		}
+		if(flash) {
+			flashTimer += delta;
+			if(flashTimer > FLASH_TIMER) {
+				flash = false;
+				flashTimer = 0;
+			}
+		}
 	}
 
 	@Override
@@ -88,6 +104,10 @@ public class WindowButton extends Button {
 		this.hwnd = hwnd;
 		if (icon == -1)
 			icon = Util.getIcon(hwnd, window);
+	}
+
+	public void flash() {
+		flash = true;
 	}
 
 	public void setOnHover(OnAction onHover) {
