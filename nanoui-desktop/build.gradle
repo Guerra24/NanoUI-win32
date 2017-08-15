@@ -17,7 +17,7 @@ sourceSets {
 }
 
 jar {
-	version = "0.0.1-" + versioning.info.full
+	version = "0.0.4-" + versioning.info.full
 	manifest {
 		attributes (
 				"Specification-Title": "NanoUI Taskbar",
