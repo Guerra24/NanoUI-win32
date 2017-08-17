@@ -1,0 +1,22 @@
+apply plugin: "cpp"
+
+model {
+	toolChains {
+        visualCpp(VisualCpp) {
+        	installDir "C:/Program Files (x86)/Microsoft Visual Studio 14.0"
+        }
+    }
+	platforms {
+        x64 {
+            architecture "x86_64"
+        }
+    }
+    components {
+        trayhook(NativeLibrarySpec) {
+        	targetPlatform "x64"
+            binaries.withType(SharedLibraryBinarySpec) {
+                cppCompiler.define "DLL_EXPORT"
+            }
+        }
+    }
+}

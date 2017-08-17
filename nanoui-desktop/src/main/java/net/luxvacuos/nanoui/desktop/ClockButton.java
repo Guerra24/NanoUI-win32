@@ -18,7 +18,7 @@
  * 
  */
 
-package net.luxvacuos.nanoui.taskbar;
+package net.luxvacuos.nanoui.desktop;
 
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_BOTTOM;
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_CENTER;

@@ -18,7 +18,7 @@
  * 
  */
 
-package net.luxvacuos.nanoui.taskbar;
+package net.luxvacuos.nanoui.desktop;
 
 import static net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme.colorA;
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_CENTER;

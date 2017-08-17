@@ -18,7 +18,7 @@
  * 
  */
 
-package net.luxvacuos.nanoui.taskbar;
+package net.luxvacuos.nanoui.desktop;
 
 import static com.sun.jna.platform.win32.WinUser.GWL_EXSTYLE;
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
@@ -272,6 +272,7 @@ public class TaskBar extends AbstractState {
 				}
 				switch (uMsg) {
 				case WM_COPYDATA:
+					System.out.println("A");
 					break;
 				}
 				return JNI.callPPPP(dwp, hwnd, uMsg, wParam, lParam);
@@ -294,7 +295,14 @@ public class TaskBar extends AbstractState {
 
 		// notifyHook = User32.INSTANCE.SetWindowsHookEx(WH_CALLWNDPROC, winproc, hMod,
 		// shellThread.getValue());
-
+		TrayHook.INSTANCE.Init();
+		
+		HMODULE hmod = Kernel32.INSTANCE.GetModuleHandle("trayhook");
+		System.out.println(hmod);
+		if(TrayHook.INSTANCE.RegisterSystemTrayHook(hwnd, hmod)) {
+			System.out.println("A");
+		}
+		
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
 		accent.GradientColor = 0xBE282828;
@@ -617,7 +625,7 @@ public class TaskBar extends AbstractState {
 		super.dispose();
 		window.dispose(AppUI.getMainWindow());
 		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, old.getPointer(), 0);
-		// User32.INSTANCE.UnhookWindowsHookEx(notifyHook);
+		TrayHook.INSTANCE.UnregisterSystemTrayHook();
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
 		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
 		User32Ext.INSTANCE.DeregisterShellHookWindow(hwnd);

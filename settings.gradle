@@ -1,2 +1,2 @@
 rootProject.name = 'NanoUI'
-include 'nanoui-core', 'nanoui-desktop', 'nanoui-test'
+include 'nanoui-core', 'nanoui-desktop', 'nanoui-test', 'nanoui-win32'

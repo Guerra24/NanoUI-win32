@@ -18,7 +18,7 @@
  * 
  */
 
-package net.luxvacuos.nanoui.taskbar;
+package net.luxvacuos.nanoui.desktop;
 
 import static com.sun.jna.platform.win32.WinUser.GWL_EXSTYLE;
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
@@ -113,6 +113,8 @@ public class WindowPreview extends AbstractState {
 				if (hw == hwndGLFW)
 					switch (uMsg) {
 					case WM_KILLFOCUS:
+						//DWMapiExt.INSTANCE.InvokeAeroPeek(false, hwndWin, local, 3, new INT_PTR(32), 0x3244);
+						//DWMapiExt.INSTANCE.DwmpActivateLivePreview(0, hwndWin, local, 1);
 						TaskManager.addTask(() -> window.setVisible(false));
 						break;
 					}
@@ -169,6 +171,8 @@ public class WindowPreview extends AbstractState {
 
 			props.write();
 			DWMapiExt.INSTANCE.DwmUpdateThumbnailProperties(new INT_PTR(thumbnail.getValue()), props);
+			//DWMapiExt.INSTANCE.InvokeAeroPeek(true, hwndWin, local, 3, new INT_PTR(32), 0x3244);
+			//DWMapiExt.INSTANCE.DwmpActivateLivePreview(1, hwndWin, local, 1);
 			TaskManager.addTask(() -> window.setVisible(true));
 			run = false;
 		}

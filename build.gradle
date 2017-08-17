@@ -1,10 +1,7 @@
 subprojects {
 	apply plugin: "eclipse"
 	apply plugin: "idea"
-	apply plugin: "java"
 
-	sourceCompatibility = 1.8
-	
 	repositories {
 		mavenCentral()
 		maven { url "https://oss.sonatype.org/content/repositories/releases/" }
@@ -14,6 +11,9 @@ subprojects {
 
 
 project(":nanoui-core") {
+	apply plugin: "java"
+	
+	sourceCompatibility = 1.8
 
 	project.ext.lwjglVersion = "3.1.2"
 
@@ -39,13 +39,20 @@ project(":nanoui-core") {
 }
 
 project(":nanoui-desktop") {
+	apply plugin: "java"
+	
+	sourceCompatibility = 1.8
 
 	dependencies {
 		compile project(':nanoui-core')
+		runtime files("${rootDir}/nanoui-win32/build/libs/trayhook/shared")
 	}
 }
 
 project(":nanoui-test") {
+	apply plugin: "java"
+	
+	sourceCompatibility = 1.8
 
 	dependencies {
 		compile project(':nanoui-core')

@@ -18,7 +18,7 @@
  * 
  */
 
-package net.luxvacuos.nanoui.taskbar;
+package net.luxvacuos.nanoui.desktop;
 
 import static com.sun.jna.platform.win32.WinUser.GWL_EXSTYLE;
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;

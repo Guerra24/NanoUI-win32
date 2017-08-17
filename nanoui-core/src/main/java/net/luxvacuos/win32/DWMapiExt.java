@@ -142,5 +142,11 @@ public interface DWMapiExt extends StdCallLibrary {
 	public HRESULT DwmUpdateThumbnailProperties(INT_PTR hThumbnailId, DWM_THUMBNAIL_PROPERTIES ptnProperties);
 	
 	public HRESULT DwmGetColorizationColor(DWORDByReference color, BOOLByReference pfOpaqueBlend);
+	
+	// Aero Peek - functions not available in Win10... 
+	public int InvokeAeroPeek(boolean EM, HWND hwndWin, HWND local, long pT, INT_PTR hPN0, int x3244);
+	
+	public int DwmpActivateLivePreview(int par1, HWND hWnd, HWND c, int d);
 
+	
 }
