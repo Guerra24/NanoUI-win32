@@ -8,6 +8,6 @@
 
 extern "C" {
 LIB_FUNC void Init();
-LIB_FUNC BOOL RegisterSystemTrayHook(HWND hWnd, HINSTANCE hInstance);
+LIB_FUNC BOOL RegisterSystemTrayHook(HWND hWnd);
 LIB_FUNC BOOL UnregisterSystemTrayHook();
 }

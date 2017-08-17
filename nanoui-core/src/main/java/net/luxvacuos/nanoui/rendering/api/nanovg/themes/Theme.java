@@ -36,6 +36,7 @@ public class Theme {
 	public static final String ICON_SEARCH = uniToString(0xE721);
 	public static final String ICON_CIRCLED_CROSS = uniToString(0x2716);
 	public static final String ICON_CHEVRON_RIGHT = uniToString(0xE974);
+	public static final String ICON_CHEVRON_UP = uniToString(0xE70E);
 	public static final String ICON_CHECK = uniToString(0x2713);
 	public static final String ICON_LOGIN = uniToString(0xE740);
 	public static final String ICON_TRASH = uniToString(0xE729);

@@ -146,4 +146,28 @@ public abstract class Component implements IComponent {
 		this.resizeV = resizeV;
 	}
 
+	public float getAlignedX() {
+		return alignedX;
+	}
+
+	public float getX() {
+		return x;
+	}
+
+	public float getAlignedY() {
+		return alignedY;
+	}
+
+	public float getY() {
+		return y;
+	}
+
+	public float getW() {
+		return w;
+	}
+
+	public float getH() {
+		return h;
+	}
+
 }

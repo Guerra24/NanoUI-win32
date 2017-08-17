@@ -24,13 +24,17 @@ import java.util.List;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
+import com.sun.jna.platform.win32.Guid.GUID;
+import com.sun.jna.platform.win32.WinDef.DWORD;
+import com.sun.jna.platform.win32.WinDef.HICON;
 import com.sun.jna.platform.win32.WinDef.HWND;
+import com.sun.jna.platform.win32.WinDef.INT_PTR;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.LRESULT;
+import com.sun.jna.platform.win32.WinDef.UINT;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.platform.win32.WinUser;
-import com.sun.jna.platform.win32.WinUser.HOOKPROC;
 import com.sun.jna.platform.win32.WinUser.WINDOWPLACEMENT;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
@@ -86,6 +90,23 @@ public interface User32Ext extends StdCallLibrary {
 		public static final int NIM_ADD = 0x00000000;
 		public static final int NIM_MODIFY = 0x00000001;
 		public static final int NIM_DELETE = 0x00000002;
+	}
+
+	public interface NIS {
+		public static final int Visible = 0x00;
+		public static final int NIS_HIDDEN = 0x01;
+		public static final int NIS_SHAREDICON = 0x02;
+	}
+
+	public interface NIF {
+		public static final int NIF_MESSAGE = 0x01;
+		public static final int NIF_ICON = 0x02;
+		public static final int NIF_TIP = 0x04;
+		public static final int NIF_STATE = 0x08;
+		public static final int NIF_INFO = 0x10;
+		public static final int NIF_GUID = 0x20;
+		public static final int NIF_REALTIME = 0x40;
+		public static final int NIF_SHOWTIP = 0x80;
 	}
 
 	public class AccentPolicy extends Structure implements Structure.ByReference {
@@ -163,11 +184,70 @@ public interface User32Ext extends StdCallLibrary {
 		}
 	}
 
-	public interface CALLWNDPROC extends HOOKPROC {
-		public LRESULT HookCallback(int code, WPARAM wParam, LPARAM lParam);
+	public class COPYDATASTRUCT extends Structure implements Structure.ByReference {
+		public static final List<String> FIELDS = createFieldsOrder("dwData", "cbData", "lpData");
+
+		public COPYDATASTRUCT(Pointer pointer) {
+			super(pointer);
+			read();
+		}
+
+		public INT_PTR dwData;
+		public int cbData;
+		public Pointer lpData;
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return FIELDS;
+		}
+
 	}
 
-	public static final int WH_CALLWNDPROC = 4;
+	public class NOTIFYICONDATA extends Structure implements Structure.ByValue {
+		public static final List<String> FIELDS = createFieldsOrder("cbSize", "hWnd", "uID", "uFlags",
+				"uCallbackMessage", "hIcon", "szTip", "dwState", "dwStateMask", "szInfo", "uTimeout", "szInfoTitle",
+				"dwInfoFlags", "guidItem", "hBalloonIcon");
+
+		public DWORD cbSize;
+		public HWND hWnd;
+		public UINT uID;
+		public UINT uFlags;
+		public UINT uCallbackMessage;
+		public HICON hIcon;
+		public byte[] szTip = new byte[64];
+		public DWORD dwState;
+		public DWORD dwStateMask;
+		public byte[] szInfo = new byte[256];
+		public UINT uTimeout;
+		public byte[] szInfoTitle = new byte[64];
+		public DWORD dwInfoFlags;
+		public GUID guidItem;
+		public HICON hBalloonIcon;
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return FIELDS;
+		}
+	}
+
+	public class SHELLTRAYDATA extends Structure implements Structure.ByReference {
+		public static final List<String> FIELDS = createFieldsOrder("dwHz", "dwMessage", "nicon_data");
+
+		public SHELLTRAYDATA(Pointer pointer) {
+			super(pointer);
+			read();
+		}
+
+		public int dwHz;
+		public int dwMessage;
+		public NOTIFYICONDATA nicon_data;
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return FIELDS;
+		}
+
+	}
 
 	public static final int MAX_PATH = 260;
 

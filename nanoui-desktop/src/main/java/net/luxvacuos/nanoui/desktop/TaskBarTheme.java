@@ -30,9 +30,14 @@ import static org.lwjgl.nanovg.NanoVG.nvgFillColor;
 import static org.lwjgl.nanovg.NanoVG.nvgFontFace;
 import static org.lwjgl.nanovg.NanoVG.nvgFontSize;
 import static org.lwjgl.nanovg.NanoVG.nvgIntersectScissor;
+import static org.lwjgl.nanovg.NanoVG.nvgLineTo;
+import static org.lwjgl.nanovg.NanoVG.nvgMoveTo;
 import static org.lwjgl.nanovg.NanoVG.nvgRect;
 import static org.lwjgl.nanovg.NanoVG.nvgRestore;
 import static org.lwjgl.nanovg.NanoVG.nvgSave;
+import static org.lwjgl.nanovg.NanoVG.nvgStroke;
+import static org.lwjgl.nanovg.NanoVG.nvgStrokeColor;
+import static org.lwjgl.nanovg.NanoVG.nvgStrokeWidth;
 import static org.lwjgl.nanovg.NanoVG.nvgText;
 import static org.lwjgl.nanovg.NanoVG.nvgTextAlign;
 import static org.lwjgl.nanovg.NanoVG.nvgTextBounds;
@@ -54,6 +59,7 @@ public class TaskBarTheme extends NanoTheme {
 	public void renderButton(long vg, String preicon, String text, String font, String entypo, float x, float y,
 			float w, float h, boolean highlight, float fontSize, float preiconSize) {
 		nvgSave(vg);
+		nvgIntersectScissor(vg, x, y, w, h);
 
 		nvgBeginPath(vg);
 		nvgRect(vg, x, y, w, h);
@@ -69,7 +75,7 @@ public class TaskBarTheme extends NanoTheme {
 			nvgFontSize(vg, preiconSize);
 			nvgFontFace(vg, entypo);
 		}
-
+		float[] preiconBounds = new float[4];
 		if (preicon != null) {
 			nvgFontSize(vg, preiconSize);
 			nvgFontFace(vg, entypo);
@@ -77,20 +83,47 @@ public class TaskBarTheme extends NanoTheme {
 			if (text.isEmpty()) {
 				nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 				nvgText(vg, x + w * 0.5f, y + h * 0.5f, preicon);
+				nvgTextBounds(vg, x + w * 0.5f, y + h * 0.5f, preicon, preiconBounds);
 			} else {
 				nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 				nvgText(vg, x + h * 0.5f, y + h * 0.5f, preicon);
+				nvgTextBounds(vg, x + h * 0.5f, y + h * 0.5f, preicon, preiconBounds);
 			}
 		}
+		float[] bounds = new float[4];
 
-		nvgSave(vg);
-		nvgIntersectScissor(vg, x, y, w, h);
 		nvgFontSize(vg, fontSize);
 		nvgFontFace(vg, font);
 		nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 		nvgFillColor(vg, buttonTextColor);
+		nvgTextBounds(vg, x + h * 0.5f + 24, y + h * 0.5f, text, bounds);
 		nvgText(vg, x + h * 0.5f + 24, y + h * 0.5f, text);
-		nvgRestore(vg);
+		if (Theme.DEBUG) {
+			nvgBeginPath(vg);
+			nvgRect(vg, x, y, w, h);
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+
+			nvgBeginPath(vg);
+			if (!text.isEmpty()) {
+				nvgMoveTo(vg, bounds[0], bounds[1]);
+				nvgLineTo(vg, bounds[2], bounds[1]);
+				nvgLineTo(vg, bounds[2], bounds[3]);
+				nvgLineTo(vg, bounds[0], bounds[3]);
+				nvgLineTo(vg, bounds[0], bounds[1]);
+			}
+			if (preicon != null) {
+				nvgMoveTo(vg, preiconBounds[0], preiconBounds[1]);
+				nvgLineTo(vg, preiconBounds[2], preiconBounds[1]);
+				nvgLineTo(vg, preiconBounds[2], preiconBounds[3]);
+				nvgLineTo(vg, preiconBounds[0], preiconBounds[3]);
+				nvgLineTo(vg, preiconBounds[0], preiconBounds[1]);
+			}
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugC);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 	}
 
@@ -99,6 +132,7 @@ public class TaskBarTheme extends NanoTheme {
 			float y, float w, float h, boolean highlight, boolean active, boolean flash, float fontSize) {
 		float tw, iw = 0;
 		nvgSave(vg);
+		nvgIntersectScissor(vg, x, y, w, h);
 
 		nvgBeginPath(vg);
 		nvgRect(vg, x, y, w, h);
@@ -107,21 +141,21 @@ public class TaskBarTheme extends NanoTheme {
 		else
 			nvgFillColor(vg, buttonColor);
 		nvgFill(vg);
-		
+
 		if (flash) {
 			nvgBeginPath(vg);
-			nvgRect(vg, x, y, w , h);
+			nvgRect(vg, x, y, w, h);
 			nvgFillColor(vg, flashColor);
 			nvgFill(vg);
 		}
-		
+
 		if (active) {
 			nvgBeginPath(vg);
 			nvgRect(vg, x, y + h - 3, w, 3);
 			nvgFillColor(vg, Theme.rgba(255, 255, 255, 255, colorA));
 			nvgFill(vg);
 		}
-		
+
 		nvgFontSize(vg, fontSize);
 		nvgFontFace(vg, font);
 		tw = nvgTextBounds(vg, 0, 0, text, (FloatBuffer) null);
@@ -153,6 +187,13 @@ public class TaskBarTheme extends NanoTheme {
 		nvgFillColor(vg, buttonTextColor);
 		nvgText(vg, x + h * 0.5f + 25, y + h * 0.5f, text);
 		nvgRestore(vg);
+		if (Theme.DEBUG) {
+			nvgBeginPath(vg);
+			nvgRect(vg, x, y, w, h);
+			nvgStrokeWidth(vg, Theme.DEBUG_STROKE);
+			nvgStrokeColor(vg, Theme.debugB);
+			nvgStroke(vg);
+		}
 		nvgRestore(vg);
 	}
 

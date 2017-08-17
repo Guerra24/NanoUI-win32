@@ -1,12 +1,15 @@
 #include "stdafx.h"
-#include <stdio.h>
 #include "trayhook.h"
+
+#pragma data_seg(".shared")
+#pragma comment(linker, "/SECTION:.shared,RWS")
 
 HWND applicationHandle = NULL;
 
 #pragma data_seg()
 
 static HHOOK hook = NULL;
+HINSTANCE hInstance = NULL;
 
 static LRESULT CALLBACK HookCallback(int code, WPARAM wParam, LPARAM lParam);
 
@@ -14,7 +17,7 @@ extern "C" {
 LIB_FUNC void Init()
 {
 }
-LIB_FUNC BOOL RegisterSystemTrayHook(HWND hWnd, HINSTANCE hInstance)
+LIB_FUNC BOOL RegisterSystemTrayHook(HWND hWnd)
 {
 	HWND hShell = FindWindow("Shell_TrayWnd", NULL);
 	DWORD shellThread = GetWindowThreadProcessId(hShell, NULL);
@@ -53,7 +56,5 @@ static LRESULT CALLBACK HookCallback(int code, WPARAM wParam, LPARAM lParam)
 			}
 		}
 	}
-	printf("Test");
-	fflush(stdout);
 	return CallNextHookEx(NULL, code, wParam, lParam);
 }

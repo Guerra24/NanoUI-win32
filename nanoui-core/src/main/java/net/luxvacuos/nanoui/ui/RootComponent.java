@@ -50,11 +50,6 @@ public class RootComponent {
 		long vg = window.getNVGID();
 		nvgSave(vg);
 		nvgIntersectScissor(vg, root.rootX, window.getHeight() - root.rootY - root.rootH, root.rootW, root.rootH);
-		nvgSave(vg);
-		for (Component component : components) {
-			component.render(window);
-		}
-		nvgRestore(vg);
 		if (Theme.DEBUG) {
 			nvgBeginPath(vg);
 			nvgRect(vg, root.rootX, window.getHeight() - root.rootY - root.rootH, root.rootW, root.rootH);
@@ -62,6 +57,11 @@ public class RootComponent {
 			nvgStrokeColor(vg, Theme.debugE);
 			nvgStroke(vg);
 		}
+		nvgSave(vg);
+		for (Component component : components) {
+			component.render(window);
+		}
+		nvgRestore(vg);
 		nvgRestore(vg);
 	}
 

@@ -1,7 +1,7 @@
 /*
  * This file is part of NanoUI
  * 
- * Copyright (C) 2017 Guerra24
+ * Copyright (C) 2016-2017 Lux Vacuos
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,18 +20,20 @@
 
 package net.luxvacuos.nanoui.desktop;
 
-import com.sun.jna.Native;
-import com.sun.jna.platform.win32.WinDef.HWND;
-import com.sun.jna.win32.StdCallLibrary;
-import com.sun.jna.win32.W32APIOptions;
+import net.luxvacuos.nanoui.ui.Button;
+import net.luxvacuos.win32.User32Ext.NOTIFYICONDATA;
 
-public interface TrayHook extends StdCallLibrary {
+public class NotificationButton extends Button{
 
-	public static final TrayHook INSTANCE = Native.loadLibrary("trayhook", TrayHook.class,
-			W32APIOptions.DEFAULT_OPTIONS);
+	private NOTIFYICONDATA iconData;
 	
-	public void Init();
-	public boolean RegisterSystemTrayHook(HWND hWnd);
-	public boolean UnregisterSystemTrayHook();
+	public NotificationButton(float x, float y, float w, float h, String text, NOTIFYICONDATA iconData) {
+		super(x, y, w, h, text);
+		this.iconData = iconData;
+	}
+	
+	public NOTIFYICONDATA getIconData() {
+		return iconData;
+	}
 
 }

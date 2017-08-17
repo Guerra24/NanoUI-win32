@@ -33,7 +33,6 @@ import static com.sun.jna.platform.win32.WinUser.SW_SHOW;
 import static com.sun.jna.platform.win32.WinUser.WM_HOTKEY;
 import static com.sun.jna.platform.win32.WinUser.WM_QUIT;
 import static net.luxvacuos.win32.User32Ext.VK_E;
-import static net.luxvacuos.win32.User32Ext.WH_CALLWNDPROC;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
 import static org.lwjgl.system.windows.User32.WM_COPYDATA;
 import static org.lwjgl.system.windows.User32.WS_EX_TOOLWINDOW;
@@ -54,21 +53,16 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.User32;
-import com.sun.jna.platform.win32.WinDef.HMODULE;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
-import com.sun.jna.platform.win32.WinDef.LRESULT;
 import com.sun.jna.platform.win32.WinDef.RECT;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinUser;
-import com.sun.jna.platform.win32.WinUser.HHOOK;
 import com.sun.jna.platform.win32.WinUser.HMONITOR;
-import com.sun.jna.platform.win32.WinUser.HOOKPROC;
 import com.sun.jna.platform.win32.WinUser.MONITORINFO;
 import com.sun.jna.platform.win32.WinUser.MSG;
 import com.sun.jna.platform.win32.WinUser.WINDOWPLACEMENT;
 import com.sun.jna.platform.win32.WinUser.WNDENUMPROC;
-import com.sun.jna.ptr.IntByReference;
 
 import net.luxvacuos.nanoui.bootstrap.Bootstrap;
 import net.luxvacuos.nanoui.core.App;
@@ -93,10 +87,13 @@ import net.luxvacuos.win32.User32Ext;
 import net.luxvacuos.win32.User32Ext.ARW;
 import net.luxvacuos.win32.User32Ext.Accent;
 import net.luxvacuos.win32.User32Ext.AccentPolicy;
-import net.luxvacuos.win32.User32Ext.CALLWNDPROC;
+import net.luxvacuos.win32.User32Ext.COPYDATASTRUCT;
 import net.luxvacuos.win32.User32Ext.HSHELL;
 import net.luxvacuos.win32.User32Ext.MINIMIZEDMETRICS;
+import net.luxvacuos.win32.User32Ext.NIM;
+import net.luxvacuos.win32.User32Ext.NOTIFYICONDATA;
 import net.luxvacuos.win32.User32Ext.SHELLHOOKINFO;
+import net.luxvacuos.win32.User32Ext.SHELLTRAYDATA;
 import net.luxvacuos.win32.User32Ext.SPI;
 import net.luxvacuos.win32.User32Ext.WindowCompositionAttribute;
 import net.luxvacuos.win32.User32Ext.WindowCompositionAttributeData;
@@ -112,14 +109,15 @@ public class TaskBar extends AbstractState {
 	private ComponentWindow window;
 	private int msgNotify;
 	private Container tasks;
+
 	private Background backgroundWindow;
 	private ContextWindow contextWindow;
 	private WindowPreview previewWindow;
+	private NotificationsWindow notificationsWindow;
+
 	private boolean running = true;
 
 	private int keysThreadID;
-
-	// private HHOOK notifyHook;
 
 	private HWND taskbar;
 
@@ -272,7 +270,25 @@ public class TaskBar extends AbstractState {
 				}
 				switch (uMsg) {
 				case WM_COPYDATA:
-					System.out.println("A");
+					COPYDATASTRUCT cpData = new COPYDATASTRUCT(new Pointer(lParam));
+					if (cpData.dwData.intValue() == 1) {
+						SHELLTRAYDATA trayData = new SHELLTRAYDATA(cpData.lpData);
+						if (trayData.dwHz == 0x34753423) {
+							NOTIFYICONDATA iconData = trayData.nicon_data;
+							System.out.println("NotifyIcon Code: " + trayData.dwMessage);
+							switch (trayData.dwMessage) {
+							case NIM.NIM_ADD:
+								notificationsWindow.iconAdded(iconData);
+								break;
+							case NIM.NIM_MODIFY:
+								notificationsWindow.iconModified(iconData);
+								break;
+							case NIM.NIM_DELETE:
+								notificationsWindow.iconDeleted(iconData);
+								break;
+							}
+						}
+					}
 					break;
 				}
 				return JNI.callPPPP(dwp, hwnd, uMsg, wParam, lParam);
@@ -281,28 +297,9 @@ public class TaskBar extends AbstractState {
 		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, proc.address());
 		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
 
-		/*
-		 * CALLWNDPROC winproc = new CALLWNDPROC() {
-		 * 
-		 * @Override public LRESULT HookCallback(int nCode, WPARAM wParam, LPARAM
-		 * lParam) { System.out.println("AA"); return
-		 * User32.INSTANCE.CallNextHookEx(null, nCode, wParam, lParam); } };
-		 */
-		// IntByReference shellThread = new IntByReference();
-		// User32.INSTANCE.GetWindowThreadProcessId(taskbar, shellThread);
-
-		// HMODULE hMod = Kernel32.INSTANCE.GetModuleHandle(null);
-
-		// notifyHook = User32.INSTANCE.SetWindowsHookEx(WH_CALLWNDPROC, winproc, hMod,
-		// shellThread.getValue());
 		TrayHook.INSTANCE.Init();
-		
-		HMODULE hmod = Kernel32.INSTANCE.GetModuleHandle("trayhook");
-		System.out.println(hmod);
-		if(TrayHook.INSTANCE.RegisterSystemTrayHook(hwnd, hmod)) {
-			System.out.println("A");
-		}
-		
+		TrayHook.INSTANCE.RegisterSystemTrayHook(hwnd);
+
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
 		accent.GradientColor = 0xBE282828;
@@ -377,7 +374,7 @@ public class TaskBar extends AbstractState {
 		startBtns.addComponent(search);
 		startBtns.addComponent(taskview);
 
-		tasks = new Container(0, 0, Variables.WIDTH - 248, Variables.HEIGHT);
+		tasks = new Container(0, 0, Variables.WIDTH - 267, Variables.HEIGHT);
 		tasks.setLayout(new FlowLayout(Direction.RIGHT, 0, 0));
 		User32Ext.INSTANCE.EnumWindows(new WNDENUMPROC() {
 			@Override
@@ -420,7 +417,7 @@ public class TaskBar extends AbstractState {
 			}
 		}, null);
 
-		Container rightBtns = new Container(0, 0, 128, Variables.HEIGHT);
+		Container rightBtns = new Container(0, 0, 147, Variables.HEIGHT);
 		rightBtns.setLayout(new FlowLayout(Direction.LEFT, 0, 0));
 
 		Button minimizeAll = new Button(0, 0, 5, Variables.HEIGHT, "");
@@ -455,8 +452,19 @@ public class TaskBar extends AbstractState {
 			User32Ext.INSTANCE.keybd_event(User32Ext.VK_MENU, 0, User32Ext.KEYEVENTF_KEYUP, 0);
 			User32Ext.INSTANCE.keybd_event(User32Ext.VK_D, 0, User32Ext.KEYEVENTF_KEYUP, 0);
 		});
-
 		rightBtns.addComponent(clock);
+		Button notificationsBtn = new Button(0, 0, 24, Variables.HEIGHT, "");
+		notificationsBtn.setPreicon(Theme.ICON_CHEVRON_UP);
+		notificationsBtn.setPreiconSize(14);
+		notificationsBtn.setWindowAlignment(Alignment.RIGHT_BOTTOM);
+		notificationsBtn.setAlignment(Alignment.LEFT_TOP);
+		notificationsBtn.setOnButtonPress(() -> {
+			GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+			notificationsWindow.getWindow().setVisible(true);
+			notificationsWindow.getWindow().setPosition(
+					(int) rightBtns.getAlignedX() + (int) notificationsBtn.getAlignedX() - 88, vidmode.height() - 240);
+		});
+		rightBtns.addComponent(notificationsBtn);
 
 		window.addComponent(startBtns);
 		window.addComponent(tasks);
@@ -467,12 +475,13 @@ public class TaskBar extends AbstractState {
 		if (noExplorer) {
 			createBackground();
 			createHotKeys();
-			User32Ext.INSTANCE.SendNotifyMessage(WinUser.HWND_BROADCAST,
-					User32Ext.INSTANCE.RegisterWindowMessage("TaskbarCreated"), new WPARAM(), new LPARAM());
 		}
+		User32Ext.INSTANCE.SendNotifyMessage(WinUser.HWND_BROADCAST,
+				User32Ext.INSTANCE.RegisterWindowMessage("TaskbarCreated"), new WPARAM(), new LPARAM());
 
 		createContext();
 		createPreview();
+		createNotifications();
 
 		System.gc();
 	}
@@ -595,6 +604,46 @@ public class TaskBar extends AbstractState {
 			window.dispose();
 		});
 		backThr.start();
+	}
+
+	private void createNotifications() {
+		Variables.X = -1000;
+		Variables.Y = -1000;
+		WindowHandle handle = WindowManager.generateHandle(200, 200, "");
+		handle.isDecorated(false);
+		handle.isVisible(false);
+		PixelBufferHandle pb = new PixelBufferHandle();
+		pb.setSrgbCapable(1);
+		pb.setSamples(4);
+		handle.setPixelBuffer(pb);
+		Window notWindow = WindowManager.generate(handle);
+
+		Thread notThr = new Thread(() -> {
+			notificationsWindow = new NotificationsWindow(notWindow, handle);
+			notificationsWindow.init();
+			float delta = 0;
+			float accumulator = 0f;
+			float interval = 1f / 30;
+			float alpha = 0;
+			int fps = 30;
+			Window window = notificationsWindow.getWindow();
+			while (running) {
+				delta = window.getDelta();
+				accumulator += delta;
+				while (accumulator >= interval) {
+					notificationsWindow.update(interval);
+					accumulator -= interval;
+				}
+				alpha = accumulator / interval;
+				if (window.isVisible())
+					notificationsWindow.render(alpha);
+				window.updateDisplay(fps);
+			}
+			notificationsWindow.dispose();
+			window.dispose();
+		});
+		notThr.setName("Notifications Thread");
+		notThr.start();
 	}
 
 	private void createHotKeys() {
