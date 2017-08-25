@@ -38,7 +38,8 @@ import static org.lwjgl.system.windows.User32.WM_COPYDATA;
 import static org.lwjgl.system.windows.User32.WS_EX_TOOLWINDOW;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,8 +101,11 @@ import net.luxvacuos.win32.User32Ext.WindowCompositionAttributeData;
 
 public class TaskBar extends AbstractState {
 
-	private static final List<String> IGNORE_WINDOWS = new ArrayList<>();
-	private static final List<String> IGNORE_WINDOWS_UWP = new ArrayList<>();
+	public static final List<String> IGNORE_WINDOWS = Collections.unmodifiableList(
+			Arrays.asList("Program Manager", "Windows Shell Experience Host", "Date and Time Information",
+					"Windows Ink Workspace", "ShareX - Region capture", "ShareX - Screen recording"));
+	public static final List<String> IGNORE_WINDOWS_UWP = Collections
+			.unmodifiableList(Arrays.asList("Windows.UI.Core.CoreWindow"));
 
 	private Map<HWND, WindowButton> windows = new HashMap<>();
 
@@ -124,7 +128,9 @@ public class TaskBar extends AbstractState {
 	private HWND taskbar;
 
 	private boolean noExplorer = false;
-	private boolean printMessages = true;
+	private boolean printMessages = false;
+	
+	private static final float BUTTON_WIDTH = 200;
 
 	protected TaskBar() {
 		super("_main");
@@ -136,15 +142,6 @@ public class TaskBar extends AbstractState {
 
 		Thread.currentThread().setName("Taskbar");
 		Theme.setTheme(new TaskBarTheme());
-
-		IGNORE_WINDOWS.add("Program Manager");
-		IGNORE_WINDOWS.add("Windows Shell Experience Host");
-		IGNORE_WINDOWS.add("Date and Time Information");
-		IGNORE_WINDOWS.add("Windows Ink Workspace");
-		IGNORE_WINDOWS.add("ShareX - Region capture");
-		IGNORE_WINDOWS.add("ShareX - Screen recording");
-
-		IGNORE_WINDOWS_UWP.add("Windows.UI.Core.CoreWindow");
 
 		window = new ComponentWindow(AppUI.getMainWindow());
 		window.getTitlebar().setEnabled(false);
@@ -199,7 +196,7 @@ public class TaskBar extends AbstractState {
 								String className = Native.toString(classNameC);
 								if (!IGNORE_WINDOWS.contains(title) && !IGNORE_WINDOWS_UWP.contains(className)
 										&& !windows.containsKey(hwndD)) {
-									WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
+									WindowButton btn = new WindowButton(0, 0, BUTTON_WIDTH, Variables.HEIGHT, title, hwndD);
 									btn.setOnButtonPress(() -> {
 										if (btn.active) {
 											User32.INSTANCE.SetForegroundWindow(hwndD);
@@ -254,9 +251,9 @@ public class TaskBar extends AbstractState {
 						SHELLHOOKINFO info = new SHELLHOOKINFO(new Pointer(lParam));
 						btn = windows.get(info.hWnd);
 						if (btn != null) {
-							info.rc.left = (short) (btn.getX() + 80);
+							info.rc.left = (short) (btn.getX());
 							info.rc.top = (short) (vidmode.height() - 40);
-							info.rc.right = (short) (btn.getX() + 120);
+							info.rc.right = (short) (btn.getX() + BUTTON_WIDTH);
 							info.rc.bottom = (short) (vidmode.height());
 							info.write();
 						}
@@ -415,7 +412,7 @@ public class TaskBar extends AbstractState {
 						String className = Native.toString(classNameC);
 						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)
 								&& !IGNORE_WINDOWS_UWP.contains(className) && !windows.containsKey(hwndD)) {
-							WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
+							WindowButton btn = new WindowButton(0, 0, BUTTON_WIDTH, Variables.HEIGHT, title, hwndD);
 							btn.setOnButtonPress(() -> {
 								if (btn.active) {
 									User32.INSTANCE.SetForegroundWindow(hwndD);

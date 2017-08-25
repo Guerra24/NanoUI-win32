@@ -185,7 +185,7 @@ public class TaskBarTheme extends NanoTheme {
 		nvgFontFace(vg, font);
 		nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 		nvgFillColor(vg, buttonTextColor);
-		nvgText(vg, x + h * 0.5f + 25, y + h * 0.5f, text);
+		nvgText(vg, x + h * 0.5f + 20, y + h * 0.5f, text);
 		nvgRestore(vg);
 		if (Theme.DEBUG) {
 			nvgBeginPath(vg);

@@ -54,7 +54,7 @@ public class WindowButton extends Button {
 		Theme.renderTaskbarWindowButton(window.getNVGID(), preicon, text, font, entypo, rootComponent.rootX + alignedX,
 				window.getHeight() - rootComponent.rootY - alignedY - h, w, h, inside, active, flash, fontSize);
 		if (icon != -1)
-			Theme.renderImage(window.getNVGID(), rootComponent.rootX + alignedX + h * 0.30f,
+			Theme.renderImage(window.getNVGID(), rootComponent.rootX + alignedX + h * 0.25f,
 					window.getHeight() - rootComponent.rootY - alignedY - h + h * 0.25f, h * 0.50f, h * 0.50f, icon,
 					1f);
 	}

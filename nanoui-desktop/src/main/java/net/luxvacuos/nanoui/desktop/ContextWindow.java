@@ -157,11 +157,15 @@ public class ContextWindow extends AbstractState {
 			});
 			Button btnOpen = new Button(0, 30, 200, 30, title);
 			btnOpen.setOnButtonPress(() -> {
-				try {
-					new ProcessBuilder(WindowUtils.getProcessFilePath(hwndWin), "").start();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				char[] classNameC = new char[128];
+				User32.INSTANCE.GetClassName(hwndWin, classNameC, classNameC.length);
+				String className = Native.toString(classNameC);
+				if (!className.equals("ApplicationFrameWindow"))
+					try {
+						new ProcessBuilder(WindowUtils.getProcessFilePath(hwndWin), "").start();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				TaskManager.addTask(() -> window.setVisible(false));
 			});
 			bottomBtns.addComponent(btnClose);
