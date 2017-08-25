@@ -229,8 +229,8 @@ public class TaskBar extends AbstractState {
 							}
 						return 1;
 					case HSHELL.HSHELL_WINDOWDESTROYED:
-						WindowButton btnD = windows.get(hwndD);
-						if (btnD != null)
+						WindowButton btn = windows.get(hwndD);
+						if (btn != null)
 							tasks.removeComponent(windows.remove(hwndD), AppUI.getMainWindow());
 						return 1;
 					case HSHELL.HSHELL_WINDOWACTIVATED:
@@ -238,49 +238,57 @@ public class TaskBar extends AbstractState {
 							WindowButton wb = (WindowButton) comp;
 							wb.active = false;
 						}
-						WindowButton btnA = windows.get(hwndD);
-						if (btnA != null)
-							btnA.active = true;
+						btn = windows.get(hwndD);
+						if (btn != null)
+							btn.active = true;
 						return 1;
 					case HSHELL.HSHELL_REDRAW:
-						WindowButton btnR = windows.get(hwndD);
-						if (btnR != null) {
-							btnR.setText(title);
-							btnR.reDraw(hwndD, AppUI.getMainWindow());
+						btn = windows.get(hwndD);
+						if (btn != null) {
+							btn.setText(title);
+							btn.reDraw(hwndD, AppUI.getMainWindow());
 						}
 						return 1;
 					case HSHELL.HSHELL_GETMINRECT:
 						GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
 						SHELLHOOKINFO info = new SHELLHOOKINFO(new Pointer(lParam));
-						WindowButton btnM = windows.get(info.hWnd);
-						if (btnM != null) {
-							info.rc.left = (short) (btnM.getX() + 80);
+						btn = windows.get(info.hWnd);
+						if (btn != null) {
+							info.rc.left = (short) (btn.getX() + 80);
 							info.rc.top = (short) (vidmode.height() - 40);
-							info.rc.right = (short) (btnM.getX() + 120);
+							info.rc.right = (short) (btn.getX() + 120);
 							info.rc.bottom = (short) (vidmode.height());
 							info.write();
 						}
 						return 1;
 					case HSHELL.HSHELL_WINDOWFULLSCREEN:
-						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
+						char[] classNameC = new char[128];
+						User32.INSTANCE.GetClassName(hwndD, classNameC, classNameC.length);
+						String className = Native.toString(classNameC);
+						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)
+								&& !IGNORE_WINDOWS_UWP.contains(className)) {
 							AppUI.getMainWindow().setVisible(false);
-							WindowButton btnWF = windows.get(hwndD);
-							if (btnWF != null)
-								btnWF.truefullscreen = true;
+							btn = windows.get(hwndD);
+							if (btn != null)
+								btn.truefullscreen = true;
 						}
 						return 1;
 					case HSHELL.HSHELL_WINDOWNORMAL:
-						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
+						classNameC = new char[128];
+						User32.INSTANCE.GetClassName(hwndD, classNameC, classNameC.length);
+						className = Native.toString(classNameC);
+						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)
+								&& !IGNORE_WINDOWS_UWP.contains(className)) {
 							AppUI.getMainWindow().setVisible(true);
-							WindowButton btnWF = windows.get(hwndD);
-							if (btnWF != null)
-								btnWF.truefullscreen = false;
+							btn = windows.get(hwndD);
+							if (btn != null)
+								btn.truefullscreen = false;
 						}
 						return 1;
 					case HSHELL.HSHELL_FLASH:
-						WindowButton btnF = windows.get(hwndD);
-						if (btnF != null) {
-							btnF.flash();
+						btn = windows.get(hwndD);
+						if (btn != null) {
+							btn.flash();
 						}
 						return 1;
 					}
