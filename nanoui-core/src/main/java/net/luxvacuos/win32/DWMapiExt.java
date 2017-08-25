@@ -126,9 +126,11 @@ public interface DWMapiExt extends StdCallLibrary {
 	}
 
 	public interface DWM_TNP {
-		public static final int DWM_TNP_VISIBLE = 0x8;
-		public static final int DWM_TNP_OPACITY = 0x4;
 		public static final int DWM_TNP_RECTDESTINATION = 0x1;
+		public static final int DWM_TNP_RECTSOURCE = 0x2;
+		public static final int DWM_TNP_OPACITY = 0x4;
+		public static final int DWM_TNP_VISIBLE = 0x8;
+		public static final int DWM_TNP_SOURCECLIENTAREAONLY = 0x10;
 	}
 
 	public HRESULT DwmExtendFrameIntoClientArea(HWND window, MARGINS margins);

@@ -27,6 +27,7 @@ import static com.sun.jna.platform.win32.WinUser.ICON_SMALL;
 import static com.sun.jna.platform.win32.WinUser.ICON_SMALL2;
 import static com.sun.jna.platform.win32.WinUser.WM_GETICON;
 import static org.lwjgl.nanovg.NanoVG.nvgCreateImageMem;
+import static com.sun.jna.platform.win32.Kernel32.*;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
@@ -48,26 +49,66 @@ import javax.swing.filechooser.FileSystemView;
 import org.lwjgl.BufferUtils;
 
 import com.sun.jna.Memory;
+import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.WindowUtils;
 import com.sun.jna.platform.win32.GDI32;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.Ole32;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HDC;
 import com.sun.jna.platform.win32.WinDef.HICON;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
+import com.sun.jna.platform.win32.WinDef.UINT;
+import com.sun.jna.platform.win32.WinDef.UINT_PTR;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinGDI.BITMAPINFO;
 import com.sun.jna.platform.win32.WinGDI.BITMAPINFOHEADER;
 import com.sun.jna.platform.win32.WinGDI.ICONINFO;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
+import com.sun.jna.platform.win32.WinUser.WNDENUMPROC;
+import com.sun.jna.ptr.IntByReference;
 
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
+import net.luxvacuos.win32.Kernel32Ext;
+import net.luxvacuos.win32.Oleacc;
 import net.luxvacuos.win32.User32Ext;
 
 public class Util {
-	
-	
+
 	public static int getIcon(HWND hwnd, Window window) {
+		HWND[] ret = new HWND[1];
+		char[] classNameC = new char[128];
+		User32.INSTANCE.GetClassName(hwnd, classNameC, classNameC.length);
+		String className = Native.toString(classNameC);
+		if (className.equals("ApplicationFrameWindow")) {
+			User32.INSTANCE.EnumChildWindows(hwnd, new WNDENUMPROC() {
+				@Override
+				public boolean callback(HWND hWndC, Pointer data) {
+					char[] classNameC = new char[128];
+					User32.INSTANCE.GetClassName(hWndC, classNameC, classNameC.length);
+					String className = Native.toString(classNameC);
+					if (className.equals("Windows.UI.Core.CoreWindow")) {
+						ret[0] = hWndC;
+						return false;
+					}
+					return true;
+				}
+			}, null);
+			if (ret[0] == null)
+				return -1;
+			else
+				hwnd = ret[0];
+			/*IntByReference processID = new IntByReference();
+			User32.INSTANCE.GetWindowThreadProcessId(hwnd, processID);
+			HANDLE hProcess = Kernel32.INSTANCE.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false,
+					processID.getValue());
+			UINT_PTR length = new UINT_PTR();
+			Kernel32Ext.INSTANCE.GetPackageId(hProcess, length, null);
+			System.out.println(length.longValue());*/
+		}
+
 		File exe = new File(WindowUtils.getProcessFilePath(hwnd));
 		BufferedImage image = null;
 		try {
@@ -78,9 +119,8 @@ public class Util {
 		if (image == null)
 			if (exe.exists()) {
 				Icon icon = FileSystemView.getFileSystemView().getSystemIcon(exe);
-				if (icon instanceof ImageIcon) {
+				if (icon instanceof ImageIcon)
 					image = (BufferedImage) ((ImageIcon) icon).getImage();
-				}
 			}
 
 		if (image == null) {
@@ -100,7 +140,7 @@ public class Util {
 			final HICON hIcon = new HICON(new Pointer(iconHandle));
 			final Dimension iconSize = WindowUtils.getIconSize(hIcon);
 			if (iconSize.width == 0 || iconSize.height == 0)
-				return 0;
+				return -1;
 
 			final int width = iconSize.width;
 			final int height = iconSize.height;
@@ -156,8 +196,7 @@ public class Util {
 		ByteBuffer buffer;
 		buffer = BufferUtils.createByteBuffer(8 * 1024);
 		InputStream source = new ByteArrayInputStream(os.toByteArray());
-		try {
-			ReadableByteChannel rbc = Channels.newChannel(source);
+		try (ReadableByteChannel rbc = Channels.newChannel(source)) {
 			while (true) {
 				int bytes = rbc.read(buffer);
 				if (bytes == -1)

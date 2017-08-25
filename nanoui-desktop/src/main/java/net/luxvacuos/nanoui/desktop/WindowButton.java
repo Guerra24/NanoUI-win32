@@ -31,16 +31,15 @@ import net.luxvacuos.nanoui.ui.OnAction;
 
 public class WindowButton extends Button {
 
-	private static final float FLASH_TIMER = 0.5f;
+	private static final float FLASH_TIMER = 0.5f, AGAIN_TIMER = 0.5f;
 
 	private HWND hwnd;
 	protected boolean active = false, truefullscreen;
 	private int icon = -1;
 	private OnAction onHover;
 	private float timer;
-	private boolean hover = false;
-	private boolean flash;
-	private float flashTimer;
+	private boolean hover = false, flash, tryAgain;
+	private float flashTimer, tryAgainTimer;
 
 	public WindowButton(float x, float y, float w, float h, String text, HWND hwnd) {
 		super(x, y, w, h, text);
@@ -85,6 +84,20 @@ public class WindowButton extends Button {
 				flashTimer = 0;
 			}
 		}
+		if (tryAgain) {
+			tryAgainTimer += delta;
+			if (tryAgainTimer > AGAIN_TIMER)
+				if (icon == -1) {
+					icon = Util.getIcon(hwnd, window);
+					if (icon != -1)
+						tryAgain = false;
+					tryAgainTimer = 0;
+				} else {
+					tryAgain = false;
+					tryAgainTimer = 0;
+				}
+					
+		}
 	}
 
 	@Override
@@ -96,8 +109,11 @@ public class WindowButton extends Button {
 
 	public void reDraw(HWND hwnd, Window window) {
 		this.hwnd = hwnd;
-		if (icon == -1)
+		if (icon == -1) {
 			icon = Util.getIcon(hwnd, window);
+			if (icon == -1)
+				tryAgain = true;
+		}
 	}
 
 	public void flash() {

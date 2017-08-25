@@ -199,8 +199,8 @@ public class TestApp extends AbstractState {
 
 	public static void main(String[] args) {
 		new Bootstrap(args);
-		Variables.WIDTH = 1264;
-		Variables.HEIGHT = 683;
+		Variables.WIDTH = 800;
+		Variables.HEIGHT = 600;
 		Variables.X = 400;
 		Variables.Y = 200;
 		Variables.TITLE = "";

@@ -130,7 +130,7 @@ public class TaskBar extends AbstractState {
 	private boolean noExplorer = false;
 	private boolean printMessages = false;
 	
-	private static final float BUTTON_WIDTH = 200;
+	private static final float BUTTON_WIDTH = 40;
 
 	protected TaskBar() {
 		super("_main");
