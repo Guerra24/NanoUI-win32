@@ -101,6 +101,7 @@ import net.luxvacuos.win32.User32Ext.WindowCompositionAttributeData;
 public class TaskBar extends AbstractState {
 
 	private static final List<String> IGNORE_WINDOWS = new ArrayList<>();
+	private static final List<String> IGNORE_WINDOWS_UWP = new ArrayList<>();
 
 	private Map<HWND, WindowButton> windows = new HashMap<>();
 
@@ -109,6 +110,7 @@ public class TaskBar extends AbstractState {
 	private ComponentWindow window;
 	private int msgNotify;
 	private Container tasks;
+	private HWND local;
 
 	private Background backgroundWindow;
 	private ContextWindow contextWindow;
@@ -122,6 +124,7 @@ public class TaskBar extends AbstractState {
 	private HWND taskbar;
 
 	private boolean noExplorer = false;
+	private boolean printMessages = true;
 
 	protected TaskBar() {
 		super("_main");
@@ -141,6 +144,8 @@ public class TaskBar extends AbstractState {
 		IGNORE_WINDOWS.add("ShareX - Region capture");
 		IGNORE_WINDOWS.add("ShareX - Screen recording");
 
+		IGNORE_WINDOWS_UWP.add("Windows.UI.Core.CoreWindow");
+
 		window = new ComponentWindow(AppUI.getMainWindow());
 		window.getTitlebar().setEnabled(false);
 		window.init(AppUI.getMainWindow());
@@ -148,7 +153,7 @@ public class TaskBar extends AbstractState {
 		window.setLayout(new FlowLayout(Direction.RIGHT, 0, 0));
 
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
-		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
+		local = new HWND(Pointer.createConstant(hwndGLFW));
 
 		if (noExplorer) {
 			oldMM = new MINIMIZEDMETRICS();
@@ -164,16 +169,15 @@ public class TaskBar extends AbstractState {
 			minMet.write();
 
 			User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETMINIMIZEDMETRICS, minMet.size(), minMet.getPointer(), 0);
-			User32Ext.INSTANCE.SetTaskmanWindow(hwnd);
-			User32Ext.INSTANCE.RegisterShellHookWindow(hwnd);
-			User32Ext.INSTANCE.SetShellWindow(hwnd);
+			User32Ext.INSTANCE.SetTaskmanWindow(local);
+			User32Ext.INSTANCE.RegisterShellHookWindow(local);
+			User32Ext.INSTANCE.SetShellWindow(local);
 			msgNotify = User32Ext.INSTANCE.RegisterWindowMessage("SHELLHOOK");
 		} else {
-			User32Ext.INSTANCE.RegisterShellHookWindow(hwnd);
+			User32Ext.INSTANCE.RegisterShellHookWindow(local);
 			msgNotify = 49195;
 		}
-
-		long dwp = User32Ext.INSTANCE.GetWindowLongPtr(hwnd, GWL_WNDPROC);
+		long dwp = User32Ext.INSTANCE.GetWindowLongPtr(local, GWL_WNDPROC);
 
 		WindowProc proc = new WindowProc() {
 			@Override
@@ -184,12 +188,16 @@ public class TaskBar extends AbstractState {
 					User32Ext.INSTANCE.GetWindowTextW(hwndD, buffer, buffer.length);
 					String title = Native.toString(buffer);
 					int action = (int) wParam;
-					System.out.println(action + " - " + lParam + ": " + title);
+					if (printMessages)
+						System.out.println(action + " - " + lParam + ": " + title);
 					switch (action) {
 					case HSHELL.HSHELL_WINDOWCREATED:
 						if (User32.INSTANCE.IsWindowVisible(hwndD))
-							if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
-								if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)
+							if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0) {
+								char[] classNameC = new char[128];
+								User32.INSTANCE.GetClassName(hwndD, classNameC, classNameC.length);
+								String className = Native.toString(classNameC);
+								if (!IGNORE_WINDOWS.contains(title) && !IGNORE_WINDOWS_UWP.contains(className)
 										&& !windows.containsKey(hwndD)) {
 									WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
 									btn.setOnButtonPress(() -> {
@@ -218,6 +226,7 @@ public class TaskBar extends AbstractState {
 									tasks.addComponent(btn);
 									windows.put(hwndD, btn);
 								}
+							}
 						return 1;
 					case HSHELL.HSHELL_WINDOWDESTROYED:
 						WindowButton btnD = windows.get(hwndD);
@@ -253,12 +262,20 @@ public class TaskBar extends AbstractState {
 						}
 						return 1;
 					case HSHELL.HSHELL_WINDOWFULLSCREEN:
-						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title))
+						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
 							AppUI.getMainWindow().setVisible(false);
+							WindowButton btnWF = windows.get(hwndD);
+							if (btnWF != null)
+								btnWF.truefullscreen = true;
+						}
 						return 1;
 					case HSHELL.HSHELL_WINDOWNORMAL:
-						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title))
+						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)) {
 							AppUI.getMainWindow().setVisible(true);
+							WindowButton btnWF = windows.get(hwndD);
+							if (btnWF != null)
+								btnWF.truefullscreen = false;
+						}
 						return 1;
 					case HSHELL.HSHELL_FLASH:
 						WindowButton btnF = windows.get(hwndD);
@@ -275,7 +292,8 @@ public class TaskBar extends AbstractState {
 						SHELLTRAYDATA trayData = new SHELLTRAYDATA(cpData.lpData);
 						if (trayData.dwHz == 0x34753423) {
 							NOTIFYICONDATA iconData = trayData.nicon_data;
-							System.out.println("NotifyIcon Code: " + trayData.dwMessage);
+							if (printMessages)
+								System.out.println("NotifyIcon Code: " + trayData.dwMessage);
 							switch (trayData.dwMessage) {
 							case NIM.NIM_ADD:
 								notificationsWindow.iconAdded(iconData);
@@ -294,11 +312,11 @@ public class TaskBar extends AbstractState {
 				return JNI.callPPPP(dwp, hwnd, uMsg, wParam, lParam);
 			}
 		};
-		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_WNDPROC, proc.address());
-		User32Ext.INSTANCE.SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
+		User32Ext.INSTANCE.SetWindowLongPtr(local, GWL_WNDPROC, proc.address());
+		User32Ext.INSTANCE.SetWindowLongPtr(local, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
 
 		TrayHook.INSTANCE.Init();
-		TrayHook.INSTANCE.RegisterSystemTrayHook(hwnd);
+		TrayHook.INSTANCE.RegisterSystemTrayHook(local);
 
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
@@ -313,9 +331,9 @@ public class TaskBar extends AbstractState {
 		data.SizeOfData = accentStructSize;
 		data.Data = accentPtr;
 
-		User32Ext.INSTANCE.SetWindowCompositionAttribute(hwnd, data);
+		User32Ext.INSTANCE.SetWindowCompositionAttribute(local, data);
 
-		HMONITOR monitor = User32.INSTANCE.MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+		HMONITOR monitor = User32.INSTANCE.MonitorFromWindow(local, MONITOR_DEFAULTTOPRIMARY);
 		MONITORINFO info = new MONITORINFO();
 		User32.INSTANCE.GetMonitorInfo(monitor, info);
 		if (!noExplorer) {
@@ -383,8 +401,12 @@ public class TaskBar extends AbstractState {
 					char[] buffer = new char[1024];
 					User32Ext.INSTANCE.GetWindowTextW(hwndD, buffer, buffer.length);
 					String title = Native.toString(buffer);
-					if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
-						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title) && !windows.containsKey(hwndD)) {
+					if ((User32Ext.INSTANCE.GetWindowLongPtr(hwndD, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0) {
+						char[] classNameC = new char[128];
+						User32.INSTANCE.GetClassName(hwndD, classNameC, classNameC.length);
+						String className = Native.toString(classNameC);
+						if (!title.isEmpty() && !IGNORE_WINDOWS.contains(title)
+								&& !IGNORE_WINDOWS_UWP.contains(className) && !windows.containsKey(hwndD)) {
 							WindowButton btn = new WindowButton(0, 0, 200, Variables.HEIGHT, title, hwndD);
 							btn.setOnButtonPress(() -> {
 								if (btn.active) {
@@ -412,6 +434,7 @@ public class TaskBar extends AbstractState {
 							tasks.addComponent(btn);
 							windows.put(hwndD, btn);
 						}
+					}
 				}
 				return true;
 			}
@@ -675,9 +698,7 @@ public class TaskBar extends AbstractState {
 		window.dispose(AppUI.getMainWindow());
 		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, old.getPointer(), 0);
 		TrayHook.INSTANCE.UnregisterSystemTrayHook();
-		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
-		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
-		User32Ext.INSTANCE.DeregisterShellHookWindow(hwnd);
+		User32Ext.INSTANCE.DeregisterShellHookWindow(local);
 		if (noExplorer) {
 			backgroundWindow.getWindow().closeDisplay();
 			User32.INSTANCE.PostThreadMessage(keysThreadID, WM_QUIT, new WPARAM(), new LPARAM());

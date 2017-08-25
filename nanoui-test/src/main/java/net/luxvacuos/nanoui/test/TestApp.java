@@ -21,11 +21,9 @@
 package net.luxvacuos.nanoui.test;
 
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
-import static com.sun.jna.platform.win32.WinUser.SW_MAXIMIZE;
 import static com.sun.jna.platform.win32.WinUser.SWP_NOZORDER;
+import static com.sun.jna.platform.win32.WinUser.SW_MAXIMIZE;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
-import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_BOTTOM;
-import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_LEFT;
 import static org.lwjgl.system.windows.User32.HTCAPTION;
 import static org.lwjgl.system.windows.User32.HTTOP;
 import static org.lwjgl.system.windows.User32.SWP_FRAMECHANGED;
@@ -60,12 +58,8 @@ import net.luxvacuos.nanoui.core.states.StateMachine;
 import net.luxvacuos.nanoui.input.KeyboardHandler;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.ui.Alignment;
-import net.luxvacuos.nanoui.ui.Button;
 import net.luxvacuos.nanoui.ui.ComponentWindow;
-import net.luxvacuos.nanoui.ui.Container;
 import net.luxvacuos.nanoui.ui.EditBox;
-import net.luxvacuos.nanoui.ui.Image;
-import net.luxvacuos.nanoui.ui.Text;
 import net.luxvacuos.win32.DWMapiExt;
 import net.luxvacuos.win32.DWMapiExt.MARGINS;
 import net.luxvacuos.win32.DWMapiExt.NCCALCSIZE_PARAMS;
@@ -86,7 +80,7 @@ public class TestApp extends AbstractState {
 
 		window = new ComponentWindow(AppUI.getMainWindow());
 		window.init(AppUI.getMainWindow());
-		window.setBackgroundColor(0, 0, 0, 0f);
+		window.setBackgroundColor(0, 0, 0, 1f);
 
 		long hwndGLFW = glfwGetWin32Window(AppUI.getMainWindow().getID());
 		HWND hwnd = new HWND(Pointer.createConstant(hwndGLFW));
@@ -99,7 +93,7 @@ public class TestApp extends AbstractState {
 				switch (uMsg) {
 				case WM_DWMCOLORIZATIONCOLORCHANGED:
 					DWORD color = new DWORD(wParam);
-					BOOL blend =  new BOOL(lParam);
+					BOOL blend = new BOOL(lParam);
 					String col = Long.toHexString(color.longValue());
 					String a = col.substring(0, 2);
 					col = col.substring(2);
@@ -113,6 +107,8 @@ public class TestApp extends AbstractState {
 					y = Macros.GET_Y_LPARAM(new LPARAM(lParam));
 					if (y < rect.top + 6 && x >= rect.left && x <= rect.right - 16)
 						return HTTOP;
+					WINDOWPLACEMENT winpl = new WINDOWPLACEMENT();
+					User32Ext.INSTANCE.GetWindowPlacement(hwnd, winpl);
 					if (window.getTitlebar().isInside(AppUI.getMainWindow(), x - rect.left, y - rect.top))
 						return HTCAPTION;
 					else
@@ -121,7 +117,7 @@ public class TestApp extends AbstractState {
 					if (wParam == 1) {
 						NCCALCSIZE_PARAMS par = new NCCALCSIZE_PARAMS(new Pointer(lParam));
 
-						WINDOWPLACEMENT winpl = new WINDOWPLACEMENT();
+						winpl = new WINDOWPLACEMENT();
 						User32Ext.INSTANCE.GetWindowPlacement(hwnd, winpl);
 
 						if (winpl.showCmd != SW_MAXIMIZE) {
@@ -160,45 +156,14 @@ public class TestApp extends AbstractState {
 		margins.cxLeftWidth = 0;
 		margins.cxRightWidth = 0;
 		margins.cyBottomHeight = 0;
-		margins.cyTopHeight = 33;
+		margins.cyTopHeight = 2;
 		DWMapiExt.INSTANCE.DwmExtendFrameIntoClientArea(hwnd, margins);
 
-		Container center = new Container(0, 0, 200, 250);
-		center.setAlignment(Alignment.CENTER);
-		center.setWindowAlignment(Alignment.CENTER);
+		EditBox ttbox = new EditBox(0, 0, 400, 30, "");
+		ttbox.setWindowAlignment(Alignment.LEFT);
+		ttbox.setAlignment(Alignment.LEFT);
 
-		Image logo = new Image(0, 0, 170.6666666666667f, 85.33333333333333f,
-				AppUI.getMainWindow().getResourceLoader().loadNVGTexture("logo"), true);
-		logo.setAlignment(Alignment.BOTTOM);
-		logo.setWindowAlignment(Alignment.TOP);
-		center.addComponent(logo);
-
-		Text username = new Text("Username:", -90, 140);
-		username.setAlign(NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM);
-		username.setWindowAlignment(Alignment.BOTTOM);
-		center.addComponent(username);
-
-		EditBox user = new EditBox(0, 120, 180, 30, "");
-		user.setAlignment(Alignment.CENTER);
-		user.setWindowAlignment(Alignment.BOTTOM);
-		center.addComponent(user);
-
-		Text password = new Text("Password:", -90, 80);
-		password.setAlign(NVG_ALIGN_LEFT | NVG_ALIGN_BOTTOM);
-		password.setWindowAlignment(Alignment.BOTTOM);
-		center.addComponent(password);
-
-		EditBox pass = new EditBox(0, 60, 180, 30, "");
-		pass.setAlignment(Alignment.CENTER);
-		pass.setWindowAlignment(Alignment.BOTTOM);
-		center.addComponent(pass);
-
-		Button login = new Button(0, 20, 60, 30, "Login");
-		login.setAlignment(Alignment.CENTER);
-		login.setWindowAlignment(Alignment.BOTTOM);
-		center.addComponent(login);
-
-		window.addComponent(center);
+		window.getTitlebar().getLeft().addComponent(ttbox);
 
 		AppUI.getMainWindow().setVisible(true);
 		AppUI.getMainWindow().setOnRefresh((windowID) -> {
@@ -234,11 +199,11 @@ public class TestApp extends AbstractState {
 
 	public static void main(String[] args) {
 		new Bootstrap(args);
-		Variables.WIDTH = 800;
-		Variables.HEIGHT = 600;
+		Variables.WIDTH = 1264;
+		Variables.HEIGHT = 683;
 		Variables.X = 400;
 		Variables.Y = 200;
-		Variables.TITLE = "Test App";
+		Variables.TITLE = "";
 		new App(new TestApp());
 	}
 

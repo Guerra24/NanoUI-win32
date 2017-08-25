@@ -57,8 +57,12 @@ public class Image extends Component {
 	@Override
 	public void dispose(Window window) {
 		super.dispose(window);
-		if (deleteOnClose)
+		if (deleteOnClose && image != -1)
 			nvgDeleteImage(window.getNVGID(), image);
+	}
+	
+	public void setImage(int image) {
+		this.image = image;
 	}
 
 }

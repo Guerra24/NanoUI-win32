@@ -77,10 +77,6 @@ public class ComponentWindow {
 		minimizeBtn.setWindowAlignment(Alignment.RIGHT_TOP);
 		minimizeBtn.setAlignment(Alignment.LEFT_BOTTOM);
 		minimizeBtn.setStyle(ButtonStyle.MINIMIZE);
-
-		TitleBarText titleText = new TitleBarText(Variables.TITLE, 0, 0);
-		titleText.setWindowAlignment(Alignment.LEFT);
-		titleText.setAlign(NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 		titlebar.getRight().addComponent(closeBtn);
 		titlebar.getRight().addComponent(maximizeBtn);
 		titlebar.getRight().addComponent(minimizeBtn);
@@ -89,8 +85,13 @@ public class ComponentWindow {
 		TitleBarButton forwardBtn = new TitleBarButton(0, 0, 48, 32);
 		forwardBtn.setStyle(ButtonStyle.RIGHT_ARROW);
 		titlebar.getLeft().addComponent(backBtn);
-		//titlebar.getLeft().addComponent(forwardBtn);
-		titlebar.getLeft().addComponent(titleText);
+		titlebar.getLeft().addComponent(forwardBtn);
+		if (!Variables.TITLE.isEmpty()) {
+			TitleBarText titleText = new TitleBarText(Variables.TITLE, 0, 0);
+			titleText.setWindowAlignment(Alignment.LEFT);
+			titleText.setAlign(NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+			titlebar.getLeft().addComponent(titleText);
+		}
 	}
 
 	public void render(Window window) {
@@ -114,8 +115,7 @@ public class ComponentWindow {
 			rootComponent.alwaysUpdate(delta, window, 0, window.getHeight() - Variables.TITLEBAR_HEIGHT - 1,
 					window.getWidth(), window.getHeight() - Variables.TITLEBAR_HEIGHT - 1);
 		else
-			rootComponent.alwaysUpdate(delta, window, 0, window.getHeight(),
-					window.getWidth(), window.getHeight());
+			rootComponent.alwaysUpdate(delta, window, 0, window.getHeight(), window.getWidth(), window.getHeight());
 	}
 
 	public void dispose(Window window) {

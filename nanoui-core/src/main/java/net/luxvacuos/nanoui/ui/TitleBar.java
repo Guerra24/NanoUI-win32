@@ -35,7 +35,7 @@ public class TitleBar implements ITitleBar {
 	private float time;
 	private boolean count;
 	private ComponentWindow window;
-	private NVGColor active = Theme.setColor("#292929FF"), inactive = Theme.setColor(0, 0, 0, 1);
+	private NVGColor active = Theme.setColor("#292929FF"), inactive = Theme.setColor("#000000FF");
 
 	public TitleBar(ComponentWindow window) {
 		this.window = window;
@@ -110,8 +110,12 @@ public class TitleBar implements ITitleBar {
 
 	@Override
 	public boolean isInside(Window window, int x, int y) {
-		return x >= left.getFinalW() && y < Variables.TITLEBAR_HEIGHT && x < window.getWidth() + right.getFinalW()
-				&& y > 0;
+		if (window.isMaximized())
+			return x >= left.getFinalW() && y < Variables.TITLEBAR_HEIGHT && x < window.getWidth() + right.getFinalW()
+					&& y > 0;
+		else
+			return x >= left.getFinalW() && y < Variables.TITLEBAR_HEIGHT && x < window.getWidth() + right.getFinalW()
+					&& y > 0;
 	}
 
 	@Override
@@ -155,7 +159,8 @@ public class TitleBar implements ITitleBar {
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
 	}
-	
+
+	@Override
 	public void setColor(String hex) {
 		active.r(Integer.valueOf(hex.substring(1, 3), 16) / 255f);
 		active.g(Integer.valueOf(hex.substring(3, 5), 16) / 255f);

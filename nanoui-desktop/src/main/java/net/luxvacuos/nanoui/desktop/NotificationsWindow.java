@@ -147,22 +147,22 @@ public class NotificationsWindow extends AbstractState {
 	}
 
 	public void iconAdded(NOTIFYICONDATA data) {
-		iconsTask.add(() -> {
-			NotificationButton btn = new NotificationButton(0, 0, 16, 16, "Test", data);
-			icons.addComponent(btn);
-		});
+		//iconsTask.add(() -> {
+		//	NotificationButton btn = new NotificationButton(0, 0, 16, 16, "Test", data);
+		//	icons.addComponent(btn);
+		//});
 	}
 
 	public void iconModified(NOTIFYICONDATA data) {
-		iconsTask.add(() -> {
-		});
+		//iconsTask.add(() -> {
+		//});
 	}
 
 	public void iconDeleted(NOTIFYICONDATA data) {
-		iconsTask.add(() -> {
-			NotificationButton button = iconsMap.get(data.guidItem);
-			if (button != null)
-				icons.removeComponent(button, window);
-		});
+		//iconsTask.add(() -> {
+		//	NotificationButton button = iconsMap.get(data.guidItem);
+		//	if (button != null)
+		//		icons.removeComponent(button, window);
+		//});
 	}
 }

@@ -34,7 +34,7 @@ public class WindowButton extends Button {
 	private static final float FLASH_TIMER = 0.5f;
 
 	private HWND hwnd;
-	protected boolean active = false;
+	protected boolean active = false, truefullscreen;
 	private int icon = -1;
 	private OnAction onHover;
 	private float timer;
