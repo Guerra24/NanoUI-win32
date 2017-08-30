@@ -44,6 +44,7 @@ project(":nanoui-desktop") {
 	sourceCompatibility = 1.8
 
 	dependencies {
+		compile 'org.jdom:jdom2:2.0.6'
 		compile project(':nanoui-core')
 		runtime files("${rootDir}/nanoui-win32/build/libs/trayhook/shared")
 	}

@@ -130,7 +130,7 @@ public class TaskBar extends AbstractState {
 	private boolean noExplorer = false;
 	private boolean printMessages = false;
 	
-	private static final float BUTTON_WIDTH = 40;
+	private static final float BUTTON_WIDTH = 200;
 
 	protected TaskBar() {
 		super("_main");
@@ -320,9 +320,6 @@ public class TaskBar extends AbstractState {
 		User32Ext.INSTANCE.SetWindowLongPtr(local, GWL_WNDPROC, proc.address());
 		User32Ext.INSTANCE.SetWindowLongPtr(local, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
 
-		TrayHook.INSTANCE.Init();
-		TrayHook.INSTANCE.RegisterSystemTrayHook(local);
-
 		AccentPolicy accent = new AccentPolicy();
 		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
 		accent.GradientColor = 0xBE282828;
@@ -504,13 +501,20 @@ public class TaskBar extends AbstractState {
 			createBackground();
 			createHotKeys();
 		}
-		User32Ext.INSTANCE.SendNotifyMessage(WinUser.HWND_BROADCAST,
-				User32Ext.INSTANCE.RegisterWindowMessage("TaskbarCreated"), new WPARAM(), new LPARAM());
-
 		createContext();
 		createPreview();
 		createNotifications();
-
+		
+		TrayHook.INSTANCE.Init();
+		TrayHook.INSTANCE.RegisterSystemTrayHook(local);
+		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		User32Ext.INSTANCE.SendNotifyMessage(WinUser.HWND_BROADCAST,
+				User32Ext.INSTANCE.RegisterWindowMessage("TaskbarCreated"), new WPARAM(), new LPARAM());
 		System.gc();
 	}
 

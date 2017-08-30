@@ -53,8 +53,8 @@ public class WindowButton extends Button {
 		Theme.renderTaskbarWindowButton(window.getNVGID(), preicon, text, font, entypo, rootComponent.rootX + alignedX,
 				window.getHeight() - rootComponent.rootY - alignedY - h, w, h, inside, active, flash, fontSize);
 		if (icon != -1)
-			Theme.renderImage(window.getNVGID(), rootComponent.rootX + alignedX + h * 0.25f,
-					window.getHeight() - rootComponent.rootY - alignedY - h + h * 0.25f, h * 0.50f, h * 0.50f, icon,
+			Theme.renderImage(window.getNVGID(), rootComponent.rootX + alignedX + h * 0.20f,
+					window.getHeight() - rootComponent.rootY - alignedY - h + h * 0.20f, 24, 24, icon,
 					1f);
 	}
 
@@ -109,6 +109,10 @@ public class WindowButton extends Button {
 
 	public void reDraw(HWND hwnd, Window window) {
 		this.hwnd = hwnd;
+		if(icon != -1) {
+			nvgDeleteImage(window.getNVGID(), icon);
+			icon = -1;
+		}
 		if (icon == -1) {
 			icon = Util.getIcon(hwnd, window);
 			if (icon == -1)

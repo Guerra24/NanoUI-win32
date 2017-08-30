@@ -20,14 +20,14 @@
 
 package net.luxvacuos.nanoui.desktop;
 
-import static com.sun.jna.platform.win32.WinUser.GCL_HICON;
-import static com.sun.jna.platform.win32.WinUser.GCL_HICONSM;
+import static com.sun.jna.platform.win32.WinNT.PROCESS_QUERY_LIMITED_INFORMATION;
+import static com.sun.jna.platform.win32.WinUser.GCLP_HICON;
+import static com.sun.jna.platform.win32.WinUser.GCLP_HICONSM;
 import static com.sun.jna.platform.win32.WinUser.ICON_BIG;
 import static com.sun.jna.platform.win32.WinUser.ICON_SMALL;
 import static com.sun.jna.platform.win32.WinUser.ICON_SMALL2;
 import static com.sun.jna.platform.win32.WinUser.WM_GETICON;
 import static org.lwjgl.nanovg.NanoVG.nvgCreateImageMem;
-import static com.sun.jna.platform.win32.Kernel32.*;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
@@ -46,6 +46,10 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.filechooser.FileSystemView;
 
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
+import org.jdom2.input.SAXBuilder;
 import org.lwjgl.BufferUtils;
 
 import com.sun.jna.Memory;
@@ -54,14 +58,12 @@ import com.sun.jna.Pointer;
 import com.sun.jna.platform.WindowUtils;
 import com.sun.jna.platform.win32.GDI32;
 import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.Ole32;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HDC;
 import com.sun.jna.platform.win32.WinDef.HICON;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
-import com.sun.jna.platform.win32.WinDef.UINT;
-import com.sun.jna.platform.win32.WinDef.UINT_PTR;
+import com.sun.jna.platform.win32.WinDef.UINTByReference;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinGDI.BITMAPINFO;
 import com.sun.jna.platform.win32.WinGDI.BITMAPINFOHEADER;
@@ -72,12 +74,23 @@ import com.sun.jna.ptr.IntByReference;
 
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.win32.Kernel32Ext;
-import net.luxvacuos.win32.Oleacc;
 import net.luxvacuos.win32.User32Ext;
 
 public class Util {
 
+	public static String getAppUserModelId(HWND hwnd) {
+		IntByReference processID = new IntByReference();
+		User32.INSTANCE.GetWindowThreadProcessId(hwnd, processID);
+		HANDLE hProcess = Kernel32.INSTANCE.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processID.getValue());
+		UINTByReference length = new UINTByReference();
+		Kernel32Ext.INSTANCE.GetApplicationUserModelId(hProcess, length, null);
+		char[] modelID = new char[length.getValue().intValue()];
+		Kernel32Ext.INSTANCE.GetApplicationUserModelId(hProcess, length, modelID);
+		return new String(Native.toString(modelID));
+	}
+
 	public static int getIcon(HWND hwnd, Window window) {
+		BufferedImage image = null;
 		HWND[] ret = new HWND[1];
 		char[] classNameC = new char[128];
 		User32.INSTANCE.GetClassName(hwnd, classNameC, classNameC.length);
@@ -100,92 +113,110 @@ public class Util {
 				return -1;
 			else
 				hwnd = ret[0];
-			/*IntByReference processID = new IntByReference();
-			User32.INSTANCE.GetWindowThreadProcessId(hwnd, processID);
-			HANDLE hProcess = Kernel32.INSTANCE.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false,
-					processID.getValue());
-			UINT_PTR length = new UINT_PTR();
-			Kernel32Ext.INSTANCE.GetPackageId(hProcess, length, null);
-			System.out.println(length.longValue());*/
-		}
+			try {
+				File appExe = new File(WindowUtils.getProcessFilePath(hwnd));
+				SAXBuilder builder = new SAXBuilder();
+				Document document = builder.build(new File(appExe.getParent() + "\\AppxManifest.xml"));
+				Element rootNode = document.getRootElement();
+				Element applicationsNode = rootNode.getChild("Applications",
+						Namespace.getNamespace("http://schemas.microsoft.com/appx/manifest/foundation/windows10"));
+				for (Element application : applicationsNode.getChildren()) {
+					if (application.getAttributeValue("Executable").equals(appExe.getName())) {
+						Element visualElements = application.getChild("VisualElements",
+								Namespace.getNamespace("http://schemas.microsoft.com/appx/manifest/uap/windows10"));
+						String logoFilePath = visualElements.getAttributeValue("Square44x44Logo");
+						String[] logoFilePathSplit = logoFilePath.split("\\.");
+						logoFilePath = logoFilePathSplit[0];
+						logoFilePath += ".targetsize-24" + "." + logoFilePathSplit[1];
+						return window.getResourceLoader().loadNVGTexture(appExe.getParent() + "\\" + logoFilePath,
+								true);
+					}
+				}
 
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 		File exe = new File(WindowUtils.getProcessFilePath(hwnd));
-		BufferedImage image = null;
-		try {
-			sun.awt.shell.ShellFolder sf = sun.awt.shell.ShellFolder.getShellFolder(exe);
-			image = (BufferedImage) sf.getIcon(true);
-		} catch (FileNotFoundException e1) {
+		if (image == null) {
+			long iconHandle = User32Ext.INSTANCE.GetClassLongPtr(hwnd, GCLP_HICON);
+			if (iconHandle == 0)
+				iconHandle = User32Ext.INSTANCE.GetClassLongPtr(hwnd, GCLP_HICONSM);
+			if (!exe.exists()) {
+				if (iconHandle == 0)
+					iconHandle = User32Ext.INSTANCE.SendMessage(hwnd, WM_GETICON, new WPARAM(ICON_BIG), new LPARAM())
+					.longValue();
+				if (iconHandle == 0)
+					iconHandle = User32Ext.INSTANCE.SendMessage(hwnd, WM_GETICON, new WPARAM(ICON_SMALL), new LPARAM())
+					.longValue();
+				if (iconHandle == 0)
+					iconHandle = User32Ext.INSTANCE.SendMessage(hwnd, WM_GETICON, new WPARAM(ICON_SMALL2), new LPARAM())
+							.longValue();
+			}
+			if (iconHandle != 0) {
+				final HICON hIcon = new HICON(new Pointer(iconHandle));
+				final Dimension iconSize = WindowUtils.getIconSize(hIcon);
+				if (iconSize.width != 0 && iconSize.height != 0) {
+
+					final int width = iconSize.width;
+					final int height = iconSize.height;
+					final short depth = 24;
+
+					final byte[] lpBitsColor = new byte[width * height * depth / 8];
+					final Pointer lpBitsColorPtr = new Memory(lpBitsColor.length);
+					final byte[] lpBitsMask = new byte[width * height * depth / 8];
+					final Pointer lpBitsMaskPtr = new Memory(lpBitsMask.length);
+					final BITMAPINFO bitmapInfo = new BITMAPINFO();
+					final BITMAPINFOHEADER hdr = new BITMAPINFOHEADER();
+
+					bitmapInfo.bmiHeader = hdr;
+					hdr.biWidth = width;
+					hdr.biHeight = height;
+					hdr.biPlanes = 1;
+					hdr.biBitCount = depth;
+					hdr.biCompression = 0;
+					hdr.write();
+					bitmapInfo.write();
+
+					final HDC hDC = User32.INSTANCE.GetDC(null);
+					final ICONINFO iconInfo = new ICONINFO();
+					User32.INSTANCE.GetIconInfo(hIcon, iconInfo);
+					iconInfo.read();
+					GDI32.INSTANCE.GetDIBits(hDC, iconInfo.hbmColor, 0, height, lpBitsColorPtr, bitmapInfo, 0);
+					lpBitsColorPtr.read(0, lpBitsColor, 0, lpBitsColor.length);
+					GDI32.INSTANCE.GetDIBits(hDC, iconInfo.hbmMask, 0, height, lpBitsMaskPtr, bitmapInfo, 0);
+					lpBitsMaskPtr.read(0, lpBitsMask, 0, lpBitsMask.length);
+					image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+					int r, g, b, a, argb;
+					int x = 0, y = height - 1;
+					for (int i = 0; i < lpBitsColor.length; i = i + 3) {
+						b = lpBitsColor[i] & 0xFF;
+						g = lpBitsColor[i + 1] & 0xFF;
+						r = lpBitsColor[i + 2] & 0xFF;
+						a = 0xFF - lpBitsMask[i] & 0xFF;
+						if (b == 0 && g == 0 && r == 0)
+							a = 0;
+						argb = (a << 24) | (r << 16) | (g << 8) | b;
+						image.setRGB(x, y, argb);
+						x = (x + 1) % width;
+						if (x == 0)
+							y--;
+					}
+					User32.INSTANCE.ReleaseDC(null, hDC);
+				}
+			}
 		}
 		if (image == null)
-			if (exe.exists()) {
-				Icon icon = FileSystemView.getFileSystemView().getSystemIcon(exe);
-				if (icon instanceof ImageIcon)
-					image = (BufferedImage) ((ImageIcon) icon).getImage();
+			try {
+				sun.awt.shell.ShellFolder sf = sun.awt.shell.ShellFolder.getShellFolder(exe);
+				image = (BufferedImage) sf.getIcon(true);
+			} catch (FileNotFoundException e1) {
 			}
-
 		if (image == null) {
-			long iconHandle = User32Ext.INSTANCE.SendMessage(hwnd, WM_GETICON, new WPARAM(ICON_SMALL2), new LPARAM())
-					.longValue();
-			if (iconHandle == 0)
-				iconHandle = User32Ext.INSTANCE.SendMessage(hwnd, WM_GETICON, new WPARAM(ICON_SMALL), new LPARAM())
-						.longValue();
-			if (iconHandle == 0)
-				iconHandle = User32Ext.INSTANCE.SendMessage(hwnd, WM_GETICON, new WPARAM(ICON_BIG), new LPARAM())
-						.longValue();
-			if (iconHandle == 0)
-				iconHandle = User32Ext.INSTANCE.GetClassLongPtr(hwnd, GCL_HICON);
-			if (iconHandle == 0)
-				iconHandle = User32Ext.INSTANCE.GetClassLongPtr(hwnd, GCL_HICONSM);
-
-			final HICON hIcon = new HICON(new Pointer(iconHandle));
-			final Dimension iconSize = WindowUtils.getIconSize(hIcon);
-			if (iconSize.width == 0 || iconSize.height == 0)
-				return -1;
-
-			final int width = iconSize.width;
-			final int height = iconSize.height;
-			final short depth = 24;
-
-			final byte[] lpBitsColor = new byte[width * height * depth / 8];
-			final Pointer lpBitsColorPtr = new Memory(lpBitsColor.length);
-			final byte[] lpBitsMask = new byte[width * height * depth / 8];
-			final Pointer lpBitsMaskPtr = new Memory(lpBitsMask.length);
-			final BITMAPINFO bitmapInfo = new BITMAPINFO();
-			final BITMAPINFOHEADER hdr = new BITMAPINFOHEADER();
-
-			bitmapInfo.bmiHeader = hdr;
-			hdr.biWidth = width;
-			hdr.biHeight = height;
-			hdr.biPlanes = 1;
-			hdr.biBitCount = depth;
-			hdr.biCompression = 0;
-			hdr.write();
-			bitmapInfo.write();
-
-			final HDC hDC = User32.INSTANCE.GetDC(null);
-			final ICONINFO iconInfo = new ICONINFO();
-			User32.INSTANCE.GetIconInfo(hIcon, iconInfo);
-			iconInfo.read();
-			GDI32.INSTANCE.GetDIBits(hDC, iconInfo.hbmColor, 0, height, lpBitsColorPtr, bitmapInfo, 0);
-			lpBitsColorPtr.read(0, lpBitsColor, 0, lpBitsColor.length);
-			GDI32.INSTANCE.GetDIBits(hDC, iconInfo.hbmMask, 0, height, lpBitsMaskPtr, bitmapInfo, 0);
-			lpBitsMaskPtr.read(0, lpBitsMask, 0, lpBitsMask.length);
-			image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-
-			int r, g, b, a, argb;
-			int x = 0, y = height - 1;
-			for (int i = 0; i < lpBitsColor.length; i = i + 3) {
-				b = lpBitsColor[i] & 0xFF;
-				g = lpBitsColor[i + 1] & 0xFF;
-				r = lpBitsColor[i + 2] & 0xFF;
-				a = 0xFF - lpBitsMask[i] & 0xFF;
-				argb = (a << 24) | (r << 16) | (g << 8) | b;
-				image.setRGB(x, y, argb);
-				x = (x + 1) % width;
-				if (x == 0)
-					y--;
-			}
-			User32.INSTANCE.ReleaseDC(null, hDC);
+			Icon icon = FileSystemView.getFileSystemView().getSystemIcon(exe);
+			if (icon instanceof ImageIcon)
+				image = (BufferedImage) ((ImageIcon) icon).getImage();
 		}
 		final ByteArrayOutputStream os = new ByteArrayOutputStream();
 		try {

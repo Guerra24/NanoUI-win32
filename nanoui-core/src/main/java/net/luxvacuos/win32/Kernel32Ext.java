@@ -21,6 +21,7 @@ package net.luxvacuos.win32;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
+import com.sun.jna.platform.win32.WinDef.UINTByReference;
 import com.sun.jna.platform.win32.WinDef.UINT_PTR;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.win32.StdCallLibrary;
@@ -32,5 +33,8 @@ public interface Kernel32Ext extends StdCallLibrary {
 			W32APIOptions.DEFAULT_OPTIONS);
 
 	public long GetPackageId(HANDLE hProcess, UINT_PTR length, Memory buffer);
+
+	public long GetApplicationUserModelId(HANDLE hProcess, UINTByReference applicationUserModelIdLength,
+			char[] applicationUserModelId);
 
 }
