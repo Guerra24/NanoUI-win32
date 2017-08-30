@@ -45,6 +45,7 @@ project(":nanoui-desktop") {
 
 	dependencies {
 		compile 'org.jdom:jdom2:2.0.6'
+		compile 'commons-io:commons-io:2.5'
 		compile project(':nanoui-core')
 		runtime files("${rootDir}/nanoui-win32/build/libs/trayhook/shared")
 	}

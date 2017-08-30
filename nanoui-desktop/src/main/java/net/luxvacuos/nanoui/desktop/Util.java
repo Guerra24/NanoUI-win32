@@ -34,6 +34,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +47,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.filechooser.FileSystemView;
 
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
@@ -125,11 +127,46 @@ public class Util {
 						Element visualElements = application.getChild("VisualElements",
 								Namespace.getNamespace("http://schemas.microsoft.com/appx/manifest/uap/windows10"));
 						String logoFilePath = visualElements.getAttributeValue("Square44x44Logo");
-						String[] logoFilePathSplit = logoFilePath.split("\\.");
+						logoFilePath = logoFilePath.replaceAll("/", "\\\\");
+						String[] logoSplitBack = logoFilePath.split("\\\\");
+						for (int i = 1; i < logoSplitBack.length - 1; i++) {
+							logoSplitBack[0] += "\\\\" + logoSplitBack[i];
+						}
+						String[] logoFilePathSplit = logoSplitBack[logoSplitBack.length - 1].split("\\.");
 						logoFilePath = logoFilePathSplit[0];
-						logoFilePath += ".targetsize-24" + "." + logoFilePathSplit[1];
-						return window.getResourceLoader().loadNVGTexture(appExe.getParent() + "\\" + logoFilePath,
-								true);
+						logoFilePath += ".targetsize-24*" + "." + logoFilePathSplit[1];
+						File assetsFolder = new File(appExe.getParent() + "\\" + logoSplitBack[0]);
+						FileFilter fileFilter = new WildcardFileFilter(logoFilePath);
+						File[] files = assetsFolder.listFiles(fileFilter);
+						if (files.length > 0)
+							return window.getResourceLoader().loadNVGTexture(files[0].getPath(), true);
+						else {
+							fileFilter = new WildcardFileFilter(logoFilePath.toLowerCase());
+							files = assetsFolder.listFiles(fileFilter);
+							if (files.length > 0)
+								return window.getResourceLoader().loadNVGTexture(files[0].getPath(), true);
+
+							logoFilePath = logoFilePathSplit[0];
+							logoFilePath += ".scale-200" + "." + logoFilePathSplit[1];
+							File logoFile = new File(
+									appExe.getParent() + "\\" + logoSplitBack[0] + "\\" + logoFilePath);
+							if (logoFile.exists())
+								return window.getResourceLoader().loadNVGTexture(logoFile.getPath(), true);
+							else {
+								logoFilePath = logoFilePathSplit[0];
+								logoFilePath += ".scale-100" + "." + logoFilePathSplit[1];
+								logoFile = new File(appExe.getParent() + "\\" + logoSplitBack[0] + "\\" + logoFilePath);
+								if (logoFile.exists())
+									return window.getResourceLoader().loadNVGTexture(logoFile.getPath(), true);
+								else {
+									logoFilePath = logoFilePathSplit[0];
+									logoFilePath += "." + logoFilePathSplit[1];
+									logoFile = new File(
+											appExe.getParent() + "\\" + logoSplitBack[0] + "\\" + logoFilePath);
+									return window.getResourceLoader().loadNVGTexture(logoFile.getPath(), true);
+								}
+							}
+						}
 					}
 				}
 
@@ -145,10 +182,10 @@ public class Util {
 			if (!exe.exists()) {
 				if (iconHandle == 0)
 					iconHandle = User32Ext.INSTANCE.SendMessage(hwnd, WM_GETICON, new WPARAM(ICON_BIG), new LPARAM())
-					.longValue();
+							.longValue();
 				if (iconHandle == 0)
 					iconHandle = User32Ext.INSTANCE.SendMessage(hwnd, WM_GETICON, new WPARAM(ICON_SMALL), new LPARAM())
-					.longValue();
+							.longValue();
 				if (iconHandle == 0)
 					iconHandle = User32Ext.INSTANCE.SendMessage(hwnd, WM_GETICON, new WPARAM(ICON_SMALL2), new LPARAM())
 							.longValue();
