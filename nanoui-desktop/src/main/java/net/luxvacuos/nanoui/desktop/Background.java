@@ -82,6 +82,7 @@ public class Background extends AbstractState {
 						WINDOWPOS pos = new WINDOWPOS(new Pointer(lParam));
 						pos.flags |= SWP_NOZORDER | SWP_NOACTIVATE;
 						pos.write();
+						break;
 					}
 				return org.lwjgl.system.windows.User32.DefWindowProc(hw, uMsg, wParam, lParam);
 			}

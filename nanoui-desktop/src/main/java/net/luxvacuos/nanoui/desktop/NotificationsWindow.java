@@ -5,6 +5,7 @@ import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
 import static org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window;
 import static org.lwjgl.system.windows.User32.WM_KILLFOCUS;
 import static org.lwjgl.system.windows.User32.WS_EX_TOOLWINDOW;
+import static org.lwjgl.system.windows.User32.WM_CONTEXTMENU;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -127,10 +128,10 @@ public class NotificationsWindow extends AbstractState {
 		while (!iconsTask.isEmpty()) {
 			iconsTask.poll().run();
 		}
-		for (Component comp : icons.getComponents()) {
+		for (Component comp : iconsMap.values()) {
 			NotificationButton btn = (NotificationButton) comp;
-			if (!User32.INSTANCE.IsWindow(btn.getIconData().hWnd)) {
-				iconDeleted(btn.getIconData());
+			if (!User32.INSTANCE.IsWindow(btn.iconData.hWnd)) {
+				iconDeleted(btn.iconData);
 			}
 		}
 	}
@@ -147,22 +148,42 @@ public class NotificationsWindow extends AbstractState {
 	}
 
 	public void iconAdded(NOTIFYICONDATA data) {
-		//iconsTask.add(() -> {
-		//	NotificationButton btn = new NotificationButton(0, 0, 16, 16, "Test", data);
-		//	icons.addComponent(btn);
-		//});
+		if (true)
+			return;
+		System.out.println("Added: " + data.uID);
+		if (!iconsMap.containsKey(data.guidItem))
+			iconsTask.add(() -> {
+				NotificationButton btn = new NotificationButton(0, 0, 16, 16, "Test", data);
+				btn.setOnButtonPress(() -> {
+					User32Ext.INSTANCE.SendMessage(data.hWnd, WM_CONTEXTMENU,
+							new WPARAM(Pointer.nativeValue(data.hWnd.getPointer())), new LPARAM());
+				});
+				icons.addComponent(btn);
+				iconsMap.put(data.guidItem, btn);
+			});
 	}
 
 	public void iconModified(NOTIFYICONDATA data) {
-		//iconsTask.add(() -> {
-		//});
+		if (true)
+			return;
+		System.out.println("Modified: " + data.uID);
+		iconsTask.add(() -> {
+			NotificationButton btn = iconsMap.get(data.guidItem);
+			if (btn != null) {
+				btn.iconData = data;
+			}
+		});
 	}
 
 	public void iconDeleted(NOTIFYICONDATA data) {
-		//iconsTask.add(() -> {
-		//	NotificationButton button = iconsMap.get(data.guidItem);
-		//	if (button != null)
-		//		icons.removeComponent(button, window);
-		//});
+		if (true)
+			return;
+		System.out.println("Deleted: " + data.uID);
+		iconsTask.add(() -> {
+			NotificationButton button = iconsMap.remove(data.guidItem);
+			if (button != null) {
+				icons.removeComponent(button, window);
+			}
+		});
 	}
 }

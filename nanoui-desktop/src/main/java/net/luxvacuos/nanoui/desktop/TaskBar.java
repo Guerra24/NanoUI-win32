@@ -30,6 +30,7 @@ import static com.sun.jna.platform.win32.WinUser.SW_MAXIMIZE;
 import static com.sun.jna.platform.win32.WinUser.SW_MINIMIZE;
 import static com.sun.jna.platform.win32.WinUser.SW_RESTORE;
 import static com.sun.jna.platform.win32.WinUser.SW_SHOW;
+import static com.sun.jna.platform.win32.WinUser.SW_SHOWNORMAL;
 import static com.sun.jna.platform.win32.WinUser.WM_HOTKEY;
 import static com.sun.jna.platform.win32.WinUser.WM_QUIT;
 import static net.luxvacuos.win32.User32Ext.VK_E;
@@ -68,6 +69,7 @@ import com.sun.jna.platform.win32.WinUser.WNDENUMPROC;
 import net.luxvacuos.nanoui.bootstrap.Bootstrap;
 import net.luxvacuos.nanoui.core.App;
 import net.luxvacuos.nanoui.core.AppUI;
+import net.luxvacuos.nanoui.core.TaskManager;
 import net.luxvacuos.nanoui.core.Variables;
 import net.luxvacuos.nanoui.core.states.AbstractState;
 import net.luxvacuos.nanoui.core.states.StateMachine;
@@ -107,6 +109,8 @@ public class TaskBar extends AbstractState {
 	public static final List<String> IGNORE_WINDOWS_UWP = Collections
 			.unmodifiableList(Arrays.asList("Windows.UI.Core.CoreWindow"));
 
+	public static final boolean ENABLED_NOTIFICATIONS = false;
+
 	private Map<HWND, WindowButton> windows = new HashMap<>();
 
 	private RECT old;
@@ -129,7 +133,8 @@ public class TaskBar extends AbstractState {
 
 	private boolean noExplorer = false;
 	private boolean printMessages = false;
-	
+	private boolean notiSysVisible = false;
+
 	private static final float BUTTON_WIDTH = 40;
 
 	protected TaskBar() {
@@ -139,6 +144,8 @@ public class TaskBar extends AbstractState {
 	@Override
 	public void init() {
 		super.init();
+
+		TrayHook.INSTANCE.Init();
 
 		Thread.currentThread().setName("Taskbar");
 		Theme.setTheme(new TaskBarTheme());
@@ -196,7 +203,8 @@ public class TaskBar extends AbstractState {
 								String className = Native.toString(classNameC);
 								if (!IGNORE_WINDOWS.contains(title) && !IGNORE_WINDOWS_UWP.contains(className)
 										&& !windows.containsKey(hwndD)) {
-									WindowButton btn = new WindowButton(0, 0, BUTTON_WIDTH, Variables.HEIGHT, title, hwndD);
+									WindowButton btn = new WindowButton(0, 0, BUTTON_WIDTH, Variables.HEIGHT, title,
+											hwndD);
 									btn.setOnButtonPress(() -> {
 										if (btn.active) {
 											User32.INSTANCE.SetForegroundWindow(hwndD);
@@ -290,30 +298,33 @@ public class TaskBar extends AbstractState {
 						return 1;
 					}
 				}
-				switch (uMsg) {
-				case WM_COPYDATA:
-					COPYDATASTRUCT cpData = new COPYDATASTRUCT(new Pointer(lParam));
-					if (cpData.dwData.intValue() == 1) {
-						SHELLTRAYDATA trayData = new SHELLTRAYDATA(cpData.lpData);
-						if (trayData.dwHz == 0x34753423) {
-							NOTIFYICONDATA iconData = trayData.nicon_data;
-							if (printMessages)
-								System.out.println("NotifyIcon Code: " + trayData.dwMessage);
-							switch (trayData.dwMessage) {
-							case NIM.NIM_ADD:
-								notificationsWindow.iconAdded(iconData);
-								break;
-							case NIM.NIM_MODIFY:
-								notificationsWindow.iconModified(iconData);
-								break;
-							case NIM.NIM_DELETE:
-								notificationsWindow.iconDeleted(iconData);
-								break;
+				if (hwnd == hwndGLFW)
+					switch (uMsg) {
+					case WM_COPYDATA:
+						if (ENABLED_NOTIFICATIONS) {
+							COPYDATASTRUCT cpData = new COPYDATASTRUCT(new Pointer(lParam));
+							if (cpData.dwData.intValue() == 1) {
+								SHELLTRAYDATA trayData = new SHELLTRAYDATA(cpData.lpData);
+								if (trayData.dwHz == 0x34753423) {
+									NOTIFYICONDATA iconData = trayData.nicon_data;
+									if (printMessages)
+										System.out.println("NotifyIcon Code: " + trayData.dwMessage);
+									switch (trayData.dwMessage) {
+									case NIM.NIM_ADD:
+										notificationsWindow.iconAdded(iconData);
+										break;
+									case NIM.NIM_MODIFY:
+										notificationsWindow.iconModified(iconData);
+										break;
+									case NIM.NIM_DELETE:
+										notificationsWindow.iconDeleted(iconData);
+										break;
+									}
+								}
 							}
 						}
+						break;
 					}
-					break;
-				}
 				return JNI.callPPPP(dwp, hwnd, uMsg, wParam, lParam);
 			}
 		};
@@ -432,6 +443,24 @@ public class TaskBar extends AbstractState {
 								previewWindow.setHwnd(hwndD);
 								previewWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
 							});
+							btn.setOnLeft(() -> {
+								TaskManager.addTask(() -> {
+									int pos = tasks.getComponents().indexOf(btn);
+									if (pos > 0) {
+										tasks.getComponents().remove(btn);
+										tasks.getComponents().add(pos - 1, btn);
+									}
+								});
+							});
+							btn.setOnRight(() -> {
+								TaskManager.addTask(() -> {
+									int pos = tasks.getComponents().indexOf(btn);
+									if (pos < tasks.getComponents().size() - 1) {
+										tasks.getComponents().remove(btn);
+										tasks.getComponents().add(pos + 1, btn);
+									}
+								});
+							});
 							btn.reDraw(hwndD, AppUI.getMainWindow());
 							tasks.addComponent(btn);
 							windows.put(hwndD, btn);
@@ -485,9 +514,27 @@ public class TaskBar extends AbstractState {
 		notificationsBtn.setAlignment(Alignment.LEFT_TOP);
 		notificationsBtn.setOnButtonPress(() -> {
 			GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-			notificationsWindow.getWindow().setVisible(true);
-			notificationsWindow.getWindow().setPosition(
-					(int) rightBtns.getAlignedX() + (int) notificationsBtn.getAlignedX() - 88, vidmode.height() - 240);
+			if (ENABLED_NOTIFICATIONS) {
+				notificationsWindow.getWindow().setVisible(true);
+				notificationsWindow.getWindow().setPosition(
+						(int) rightBtns.getAlignedX() + (int) notificationsBtn.getAlignedX() - 88,
+						vidmode.height() - 240);
+			} else {
+				HWND noti = User32.INSTANCE.FindWindow("NotifyIconOverflowWindow", null);
+				if (notiSysVisible)
+					User32.INSTANCE.ShowWindow(noti, SW_HIDE);
+				else
+					User32.INSTANCE.ShowWindow(noti, SW_SHOWNORMAL);
+				notiSysVisible = !notiSysVisible;
+				RECT notiRect = new RECT();
+				User32.INSTANCE.GetWindowRect(noti, notiRect);
+				System.out.println(notiRect);
+				int width = notiRect.right - notiRect.left;
+				int height = notiRect.bottom - notiRect.top;
+				User32.INSTANCE.MoveWindow(noti,
+						(int) rightBtns.getAlignedX() + (int) notificationsBtn.getAlignedX() - (int) (width / 2f) + 12,
+						vidmode.height() - height - 40, width, height, true);
+			}
 		});
 		rightBtns.addComponent(notificationsBtn);
 
@@ -503,18 +550,18 @@ public class TaskBar extends AbstractState {
 		}
 		createContext();
 		createPreview();
-		createNotifications();
-		
-		TrayHook.INSTANCE.Init();
-		TrayHook.INSTANCE.RegisterSystemTrayHook(local);
-		
+		if (ENABLED_NOTIFICATIONS)
+			createNotifications();
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		User32Ext.INSTANCE.SendNotifyMessage(WinUser.HWND_BROADCAST,
-				User32Ext.INSTANCE.RegisterWindowMessage("TaskbarCreated"), new WPARAM(), new LPARAM());
+		if (ENABLED_NOTIFICATIONS) {
+			TrayHook.INSTANCE.RegisterSystemTrayHook(local);
+			User32Ext.INSTANCE.SendNotifyMessage(WinUser.HWND_BROADCAST,
+					User32Ext.INSTANCE.RegisterWindowMessage("TaskbarCreated"), new WPARAM(), new LPARAM());
+		}
 		System.gc();
 	}
 
@@ -705,8 +752,9 @@ public class TaskBar extends AbstractState {
 	public void dispose() {
 		super.dispose();
 		window.dispose(AppUI.getMainWindow());
+		if (ENABLED_NOTIFICATIONS)
+			TrayHook.INSTANCE.UnregisterSystemTrayHook();
 		User32Ext.INSTANCE.SystemParametersInfo(SPI.SPI_SETWORKAREA, 0, old.getPointer(), 0);
-		TrayHook.INSTANCE.UnregisterSystemTrayHook();
 		User32Ext.INSTANCE.DeregisterShellHookWindow(local);
 		if (noExplorer) {
 			backgroundWindow.getWindow().closeDisplay();

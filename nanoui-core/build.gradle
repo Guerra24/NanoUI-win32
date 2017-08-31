@@ -14,7 +14,7 @@ sourceSets {
 }
 
 jar {
-	version = "0.0.6-" + versioning.info.full
+	version = project.ext.globalVersion + "-" + versioning.info.full
 	manifest {
 		attributes (
 				"Specification-Title": "NanoUI",

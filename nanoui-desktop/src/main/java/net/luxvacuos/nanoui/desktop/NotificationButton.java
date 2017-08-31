@@ -25,15 +25,11 @@ import net.luxvacuos.win32.User32Ext.NOTIFYICONDATA;
 
 public class NotificationButton extends Button{
 
-	private NOTIFYICONDATA iconData;
+	protected NOTIFYICONDATA iconData;
 	
 	public NotificationButton(float x, float y, float w, float h, String text, NOTIFYICONDATA iconData) {
 		super(x, y, w, h, text);
 		this.iconData = iconData;
 	}
 	
-	public NOTIFYICONDATA getIconData() {
-		return iconData;
-	}
-
 }

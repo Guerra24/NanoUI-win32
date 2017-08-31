@@ -146,21 +146,18 @@ public class Util {
 							if (files.length > 0)
 								return window.getResourceLoader().loadNVGTexture(files[0].getPath(), true);
 
-							logoFilePath = logoFilePathSplit[0];
-							logoFilePath += ".scale-200" + "." + logoFilePathSplit[1];
+							logoFilePath = logoFilePathSplit[0] + ".scale-200" + "." + logoFilePathSplit[1];
 							File logoFile = new File(
 									appExe.getParent() + "\\" + logoSplitBack[0] + "\\" + logoFilePath);
 							if (logoFile.exists())
 								return window.getResourceLoader().loadNVGTexture(logoFile.getPath(), true);
 							else {
-								logoFilePath = logoFilePathSplit[0];
-								logoFilePath += ".scale-100" + "." + logoFilePathSplit[1];
+								logoFilePath = logoFilePathSplit[0] + ".scale-100" + "." + logoFilePathSplit[1];
 								logoFile = new File(appExe.getParent() + "\\" + logoSplitBack[0] + "\\" + logoFilePath);
 								if (logoFile.exists())
 									return window.getResourceLoader().loadNVGTexture(logoFile.getPath(), true);
 								else {
-									logoFilePath = logoFilePathSplit[0];
-									logoFilePath += "." + logoFilePathSplit[1];
+									logoFilePath = logoFilePathSplit[0] + "." + logoFilePathSplit[1];
 									logoFile = new File(
 											appExe.getParent() + "\\" + logoSplitBack[0] + "\\" + logoFilePath);
 									return window.getResourceLoader().loadNVGTexture(logoFile.getPath(), true);

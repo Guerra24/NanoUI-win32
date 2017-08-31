@@ -257,6 +257,7 @@ public interface User32Ext extends StdCallLibrary {
 
 	public static final int VK_TAB = 0x09;
 	public static final int VK_MENU = 0x12;
+	public static final int VK_SPACE = 0x20;
 	public static final int VK_A = 0x41;
 	public static final int VK_D = 0x44;
 	public static final int VK_E = 0x45;

@@ -190,7 +190,11 @@ public abstract class AbstractWindow implements IWindow {
 	}
 
 	public void setPosition(int x, int y) {
-		glfwSetWindowPos(windowID, x, y);
+		glfwSetWindowPos(this.windowID, x, y);
+	}
+
+	public void setSize(int width, int height) {
+		glfwSetWindowSize(this.windowID, width, height);
 	}
 
 	public void resetViewport() {

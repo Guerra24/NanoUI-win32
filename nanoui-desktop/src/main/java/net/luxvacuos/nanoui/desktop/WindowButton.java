@@ -22,8 +22,12 @@ package net.luxvacuos.nanoui.desktop;
 
 import static org.lwjgl.nanovg.NanoVG.nvgDeleteImage;
 
+import org.lwjgl.glfw.GLFW;
+
 import com.sun.jna.platform.win32.WinDef.HWND;
 
+import net.luxvacuos.nanoui.input.KeyboardHandler;
+import net.luxvacuos.nanoui.input.MouseHandler;
 import net.luxvacuos.nanoui.rendering.api.glfw.Window;
 import net.luxvacuos.nanoui.rendering.api.nanovg.themes.Theme;
 import net.luxvacuos.nanoui.ui.Button;
@@ -36,7 +40,7 @@ public class WindowButton extends Button {
 	private HWND hwnd;
 	protected boolean active = false, truefullscreen;
 	private int icon = -1;
-	private OnAction onHover;
+	private OnAction onHover, onLeft, onRight;
 	private float timer;
 	private boolean hover = false, flash, tryAgain;
 	private float flashTimer, tryAgainTimer;
@@ -54,8 +58,7 @@ public class WindowButton extends Button {
 				window.getHeight() - rootComponent.rootY - alignedY - h, w, h, inside, active, flash, fontSize);
 		if (icon != -1)
 			Theme.renderImage(window.getNVGID(), rootComponent.rootX + alignedX + h * 0.20f,
-					window.getHeight() - rootComponent.rootY - alignedY - h + h * 0.20f, 24, 24, icon,
-					1f);
+					window.getHeight() - rootComponent.rootY - alignedY - h + h * 0.20f, 24, 24, icon, 1f);
 	}
 
 	@Override
@@ -63,9 +66,10 @@ public class WindowButton extends Button {
 		if (!enabled)
 			return;
 		super.update(delta, window);
+		MouseHandler mh = window.getMouseHandler();
 		if (pressed || pressedRight)
 			hover = true;
-		if (insideButton(window.getMouseHandler()) && !hover) {
+		if (insideButton(mh) && !hover) {
 			timer += delta * 2f;
 			if (timer >= 1) {
 				onHover.onAction();
@@ -74,7 +78,7 @@ public class WindowButton extends Button {
 		} else {
 			timer = 0;
 		}
-		if (!insideButton(window.getMouseHandler())) {
+		if (!insideButton(mh)) {
 			hover = false;
 		}
 		if (flash) {
@@ -96,7 +100,16 @@ public class WindowButton extends Button {
 					tryAgain = false;
 					tryAgainTimer = 0;
 				}
-					
+		}
+		if (insideButton(mh)) {
+			KeyboardHandler kb = window.getKeyboardHandler();
+			if (kb.isKeyPressed(GLFW.GLFW_KEY_LEFT)) {
+				kb.ignoreKeyUntilRelease(GLFW.GLFW_KEY_LEFT);
+				onLeft.onAction();
+			} else if (kb.isKeyPressed(GLFW.GLFW_KEY_RIGHT)) {
+				kb.ignoreKeyUntilRelease(GLFW.GLFW_KEY_RIGHT);
+				onRight.onAction();
+			}
 		}
 	}
 
@@ -109,7 +122,7 @@ public class WindowButton extends Button {
 
 	public void reDraw(HWND hwnd, Window window) {
 		this.hwnd = hwnd;
-		if(icon != -1) {
+		if (icon != -1) {
 			nvgDeleteImage(window.getNVGID(), icon);
 			icon = -1;
 		}
@@ -134,6 +147,14 @@ public class WindowButton extends Button {
 
 	public float getX() {
 		return rootComponent.rootX + alignedX;
+	}
+
+	public void setOnLeft(OnAction onLeft) {
+		this.onLeft = onLeft;
+	}
+
+	public void setOnRight(OnAction onRight) {
+		this.onRight = onRight;
 	}
 
 }
