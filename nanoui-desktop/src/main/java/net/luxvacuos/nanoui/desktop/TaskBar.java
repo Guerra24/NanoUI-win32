@@ -227,6 +227,24 @@ public class TaskBar extends AbstractState {
 										previewWindow.getWindow().setPosition((int) btn.getX(), vidmode.height() - 240);
 										previewWindow.setHwnd(hwndD);
 									});
+									btn.setOnLeft(() -> {
+										TaskManager.addTask(() -> {
+											int pos = tasks.getComponents().indexOf(btn);
+											if (pos > 0) {
+												tasks.getComponents().remove(btn);
+												tasks.getComponents().add(pos - 1, btn);
+											}
+										});
+									});
+									btn.setOnRight(() -> {
+										TaskManager.addTask(() -> {
+											int pos = tasks.getComponents().indexOf(btn);
+											if (pos < tasks.getComponents().size() - 1) {
+												tasks.getComponents().remove(btn);
+												tasks.getComponents().add(pos + 1, btn);
+											}
+										});
+									});
 									btn.reDraw(hwndD, AppUI.getMainWindow());
 									tasks.addComponent(btn);
 									windows.put(hwndD, btn);
@@ -528,7 +546,6 @@ public class TaskBar extends AbstractState {
 				notiSysVisible = !notiSysVisible;
 				RECT notiRect = new RECT();
 				User32.INSTANCE.GetWindowRect(noti, notiRect);
-				System.out.println(notiRect);
 				int width = notiRect.right - notiRect.left;
 				int height = notiRect.bottom - notiRect.top;
 				User32.INSTANCE.MoveWindow(noti,
