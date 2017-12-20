@@ -97,8 +97,8 @@ public class ContextWindow extends AbstractState {
 		local = new HWND(Pointer.createConstant(hwndGLFW));
 
 		AccentPolicy accent = new AccentPolicy();
-		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
-		accent.GradientColor = 0xBE282828;
+		accent.AccentState = Accent.ACCENT_ENABLE_ACRYLIC;
+		accent.GradientColor = 0x7F000000;
 		accent.AccentFlags = 2;
 		int accentStructSize = accent.size();
 		accent.write();

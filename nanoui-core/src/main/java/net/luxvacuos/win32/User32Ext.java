@@ -49,7 +49,8 @@ public interface User32Ext extends StdCallLibrary {
 		public static final int ACCENT_ENABLE_GRADIENT = 1;
 		public static final int ACCENT_ENABLE_TRANSPARENTGRADIENT = 2;
 		public static final int ACCENT_ENABLE_BLURBEHIND = 3;
-		public static final int ACCENT_INVALID_STATE = 4;
+		public static final int ACCENT_ENABLE_ACRYLIC = 4; // YES, available on build 17063
+		public static final int ACCENT_INVALID_STATE = 5;
 	}
 
 	public interface SPI {
@@ -86,6 +87,14 @@ public interface User32Ext extends StdCallLibrary {
 		public static final int WCA_ACCENT_POLICY = 19;
 	}
 
+	public interface AccentFlags {
+		public static final int DrawLeftBorder = 0x20;
+		public static final int DrawTopBorder = 0x40;
+		public static final int DrawRightBorder = 0x80;
+		public static final int DrawBottomBorder = 0x100;
+		public static final int DrawAllBorders = (DrawLeftBorder | DrawTopBorder | DrawRightBorder | DrawBottomBorder);
+	}
+
 	public interface NIM {
 		public static final int NIM_ADD = 0x00000000;
 		public static final int NIM_MODIFY = 0x00000001;
@@ -116,6 +125,13 @@ public interface User32Ext extends StdCallLibrary {
 		public int AccentFlags;
 		public int GradientColor;
 		public int AnimationId;
+
+		public AccentPolicy() {
+		}
+
+		public AccentPolicy(Pointer p) {
+			super(p);
+		}
 
 		@Override
 		protected List<String> getFieldOrder() {
@@ -271,6 +287,8 @@ public interface User32Ext extends StdCallLibrary {
 	public boolean RegisterShellHookWindow(HWND hWnd);
 
 	public HRESULT SetWindowCompositionAttribute(HWND hwnd, WindowCompositionAttributeData data);
+
+	public HRESULT GetWindowCompositionAttribute(HWND hwnd, WindowCompositionAttributeData task);
 
 	public boolean SystemParametersInfo(int uiAction, int uiParam, Pointer pvParam, int fWinIni);
 

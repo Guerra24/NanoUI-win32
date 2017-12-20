@@ -1,4 +1,4 @@
-apply plugin: "cpp"
+/*apply plugin: "cpp"
 
 model {
 	toolChains {
@@ -19,4 +19,4 @@ model {
             }
         }
     }
-}
+}*/

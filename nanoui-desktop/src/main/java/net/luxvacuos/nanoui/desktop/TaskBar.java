@@ -56,6 +56,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HWND;
+import com.sun.jna.platform.win32.WinDef.INT_PTR;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.RECT;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
@@ -65,6 +66,8 @@ import com.sun.jna.platform.win32.WinUser.MONITORINFO;
 import com.sun.jna.platform.win32.WinUser.MSG;
 import com.sun.jna.platform.win32.WinUser.WINDOWPLACEMENT;
 import com.sun.jna.platform.win32.WinUser.WNDENUMPROC;
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.LongByReference;
 
 import net.luxvacuos.nanoui.bootstrap.Bootstrap;
 import net.luxvacuos.nanoui.core.App;
@@ -89,6 +92,7 @@ import net.luxvacuos.nanoui.ui.FlowLayout;
 import net.luxvacuos.win32.User32Ext;
 import net.luxvacuos.win32.User32Ext.ARW;
 import net.luxvacuos.win32.User32Ext.Accent;
+import net.luxvacuos.win32.User32Ext.AccentFlags;
 import net.luxvacuos.win32.User32Ext.AccentPolicy;
 import net.luxvacuos.win32.User32Ext.COPYDATASTRUCT;
 import net.luxvacuos.win32.User32Ext.HSHELL;
@@ -103,9 +107,8 @@ import net.luxvacuos.win32.User32Ext.WindowCompositionAttributeData;
 
 public class TaskBar extends AbstractState {
 
-	public static final List<String> IGNORE_WINDOWS = Collections.unmodifiableList(
-			Arrays.asList("Program Manager", "Windows Shell Experience Host", "Date and Time Information",
-					"Windows Ink Workspace", "ShareX - Region capture", "ShareX - Screen recording"));
+	public static final List<String> IGNORE_WINDOWS = Collections.unmodifiableList(Arrays.asList("Program Manager",
+			"Windows Shell Experience Host", "Date and Time Information", "Windows Ink Workspace"));
 	public static final List<String> IGNORE_WINDOWS_UWP = Collections
 			.unmodifiableList(Arrays.asList("Windows.UI.Core.CoreWindow"));
 
@@ -179,7 +182,7 @@ public class TaskBar extends AbstractState {
 			msgNotify = User32Ext.INSTANCE.RegisterWindowMessage("SHELLHOOK");
 		} else {
 			User32Ext.INSTANCE.RegisterShellHookWindow(local);
-			msgNotify = 49195;
+			msgNotify = 49192;
 		}
 		long dwp = User32Ext.INSTANCE.GetWindowLongPtr(local, GWL_WNDPROC);
 
@@ -350,17 +353,15 @@ public class TaskBar extends AbstractState {
 		User32Ext.INSTANCE.SetWindowLongPtr(local, GWL_EXSTYLE, WS_EX_TOOLWINDOW);
 
 		AccentPolicy accent = new AccentPolicy();
-		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
-		accent.GradientColor = 0xBE282828;
+		accent.AccentState = Accent.ACCENT_ENABLE_ACRYLIC;
+		accent.GradientColor = 0x7F000000;
 		accent.AccentFlags = 2;
-		int accentStructSize = accent.size();
 		accent.write();
-		Pointer accentPtr = accent.getPointer();
 
 		WindowCompositionAttributeData data = new WindowCompositionAttributeData();
 		data.Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY;
-		data.SizeOfData = accentStructSize;
-		data.Data = accentPtr;
+		data.SizeOfData = accent.size();
+		data.Data = accent.getPointer();
 
 		User32Ext.INSTANCE.SetWindowCompositionAttribute(local, data);
 
