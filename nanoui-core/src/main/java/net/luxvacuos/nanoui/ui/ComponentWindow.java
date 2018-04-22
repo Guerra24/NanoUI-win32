@@ -97,7 +97,7 @@ public class ComponentWindow {
 	public void render(Window window) {
 		window.beingNVGFrame();
 		if (titlebar.isEnabled())
-			Theme.renderBox(window.getNVGID(), 0, 1, window.getWidth(), window.getHeight() - 1, backgroundColor, 0, 0,
+			Theme.renderBox(window.getNVGID(), 0, 33, window.getWidth(), window.getHeight() - 33, backgroundColor, 0, 0,
 					0, 0);
 		else
 			Theme.renderBox(window.getNVGID(), 0, 0, window.getWidth(), window.getHeight(), backgroundColor, 0, 0, 0,

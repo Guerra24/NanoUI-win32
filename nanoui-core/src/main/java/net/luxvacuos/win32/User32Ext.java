@@ -126,13 +126,6 @@ public interface User32Ext extends StdCallLibrary {
 		public int GradientColor;
 		public int AnimationId;
 
-		public AccentPolicy() {
-		}
-
-		public AccentPolicy(Pointer p) {
-			super(p);
-		}
-
 		@Override
 		protected List<String> getFieldOrder() {
 			return FIELDS;

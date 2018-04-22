@@ -63,6 +63,11 @@ import net.luxvacuos.nanoui.ui.EditBox;
 import net.luxvacuos.win32.DWMapiExt;
 import net.luxvacuos.win32.DWMapiExt.MARGINS;
 import net.luxvacuos.win32.DWMapiExt.NCCALCSIZE_PARAMS;
+import net.luxvacuos.win32.User32Ext.Accent;
+import net.luxvacuos.win32.User32Ext.AccentFlags;
+import net.luxvacuos.win32.User32Ext.AccentPolicy;
+import net.luxvacuos.win32.User32Ext.WindowCompositionAttribute;
+import net.luxvacuos.win32.User32Ext.WindowCompositionAttributeData;
 import net.luxvacuos.win32.Macros;
 import net.luxvacuos.win32.User32Ext;
 
@@ -121,10 +126,10 @@ public class TestApp extends AbstractState {
 						User32Ext.INSTANCE.GetWindowPlacement(hwnd, winpl);
 
 						if (winpl.showCmd != SW_MAXIMIZE) {
-							par.rgrc[0].left += 8;
+							par.rgrc[0].left += 1;
 							par.rgrc[0].top += 0;
-							par.rgrc[0].right -= 8;
-							par.rgrc[0].bottom -= 8;
+							par.rgrc[0].right -= 1;
+							par.rgrc[0].bottom -= 1;
 						} else {
 							par.rgrc[0].left += 8;
 							par.rgrc[0].top += 7;
@@ -158,6 +163,19 @@ public class TestApp extends AbstractState {
 		margins.cyBottomHeight = 0;
 		margins.cyTopHeight = 2;
 		DWMapiExt.INSTANCE.DwmExtendFrameIntoClientArea(hwnd, margins);
+		
+		AccentPolicy accent = new AccentPolicy();
+		accent.AccentState = Accent.ACCENT_ENABLE_BLURBEHIND;
+		accent.GradientColor = 0x7F000000;
+		//accent.AccentFlags = AccentFlags.DrawAllBorders;
+		accent.write();
+
+		WindowCompositionAttributeData data = new WindowCompositionAttributeData();
+		data.Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY;
+		data.SizeOfData = accent.size();
+		data.Data = accent.getPointer();;
+
+		User32Ext.INSTANCE.SetWindowCompositionAttribute(hwnd, data);
 
 		EditBox ttbox = new EditBox(0, 0, 400, 30, "");
 		ttbox.setWindowAlignment(Alignment.LEFT);
@@ -201,7 +219,7 @@ public class TestApp extends AbstractState {
 		new Bootstrap(args);
 		Variables.WIDTH = 800;
 		Variables.HEIGHT = 600;
-		Variables.X = 400;
+		Variables.X = 200;
 		Variables.Y = 200;
 		Variables.TITLE = "";
 		new App(new TestApp());
